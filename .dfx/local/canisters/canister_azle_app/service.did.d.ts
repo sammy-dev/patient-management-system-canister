@@ -1,61 +1,29 @@
 import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 
-export interface Device {
+export interface SmartHomeDevice {
   'id' : string,
-  'status' : string,
-  'name' : string,
-  'createdBy' : Principal,
-  'room' : string,
+  'isOn' : boolean,
   'type' : string,
+  'updatedAt' : [] | [bigint],
+  'brand' : string,
 }
-export interface SmartHomeTask {
-  'id' : string,
-  'status' : string,
-  'title' : string,
-  'updatedDate' : [] | [bigint],
-  'assignedTo' : string,
-  'tags' : Array<string>,
-  'createdDate' : bigint,
-  'dueDate' : string,
-  'description' : string,
-  'priority' : string,
-  'comments' : Array<string>,
-  'devices' : Array<Device>,
-}
-export interface SmartHomeTaskPayload {
-  'title' : string,
-  'assignedTo' : string,
-  'tags' : Array<string>,
-  'dueDate' : string,
-  'description' : string,
-  'devices' : Array<Device>,
-}
-export type _AzleResult = { 'Ok' : SmartHomeTask } |
+export type _AzleResult = { 'Ok' : SmartHomeDevice } |
   { 'Err' : string };
-export type _AzleResult_1 = { 'Ok' : Array<SmartHomeTask> } |
+export type _AzleResult_1 = { 'Ok' : [] | [SmartHomeDevice] } |
   { 'Err' : string };
-export type _AzleResult_2 = { 'Ok' : string } |
+export type _AzleResult_2 = { 'Ok' : Array<SmartHomeDevice> } |
   { 'Err' : string };
 export interface _SERVICE {
-  'addSmartHomeTask' : ActorMethod<[SmartHomeTaskPayload], _AzleResult>,
-  'addSmartHomeTaskComment' : ActorMethod<[string, string], _AzleResult>,
-  'addSmartHomeTaskTags' : ActorMethod<[string, Array<string>], _AzleResult>,
-  'assignDeviceToSmartHomeTask' : ActorMethod<[string, Device], _AzleResult>,
-  'changeSmartHomeTaskStatus' : ActorMethod<[string, string], _AzleResult>,
-  'deleteSmartHomeTask' : ActorMethod<[string], _AzleResult>,
-  'getInitialSmartHomeTasks' : ActorMethod<[], _AzleResult_1>,
-  'getOverdueSmartHomeTasks' : ActorMethod<[], _AzleResult_1>,
-  'getSmartHomeTask' : ActorMethod<[string], _AzleResult>,
-  'getSmartHomeTasksByCreator' : ActorMethod<[Principal], _AzleResult_1>,
-  'getSmartHomeTasksByStatus' : ActorMethod<[string], _AzleResult_1>,
-  'getSmartHomeTasksByTags' : ActorMethod<[string], _AzleResult_1>,
-  'loadMoreSmartHomeTasks' : ActorMethod<[number, number], _AzleResult_1>,
-  'searchSmartHomeTasks' : ActorMethod<[string], _AzleResult_1>,
-  'sendSmartHomeTaskDueDateReminder' : ActorMethod<[string], _AzleResult_2>,
-  'setSmartHomeTaskPriority' : ActorMethod<[string, string], _AzleResult>,
-  'updateSmartHomeTask' : ActorMethod<
-    [string, SmartHomeTaskPayload],
-    _AzleResult
-  >,
+  'addDevice' : ActorMethod<[SmartHomeDevice], _AzleResult>,
+  'deleteDevice' : ActorMethod<[string], _AzleResult_1>,
+  'getActiveDevices' : ActorMethod<[], _AzleResult_2>,
+  'getDevice' : ActorMethod<[string], _AzleResult>,
+  'getDevices' : ActorMethod<[], _AzleResult_2>,
+  'getDevicesByType' : ActorMethod<[string], _AzleResult_2>,
+  'searchDevices' : ActorMethod<[string], _AzleResult_2>,
+  'toggleDevice' : ActorMethod<[string], _AzleResult>,
+  'turnOffDevice' : ActorMethod<[string], _AzleResult>,
+  'turnOnDevice' : ActorMethod<[string], _AzleResult>,
+  'updateDevice' : ActorMethod<[string, SmartHomeDevice], _AzleResult>,
 }

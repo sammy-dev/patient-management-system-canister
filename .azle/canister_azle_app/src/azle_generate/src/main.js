@@ -11,7 +11,7 @@
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.addSmartHomeTaskComment = exports.getOverdueSmartHomeTasks = exports.getSmartHomeTasksByCreator = exports.getSmartHomeTasksByStatus = exports.sendSmartHomeTaskDueDateReminder = exports.setSmartHomeTaskPriority = exports.changeSmartHomeTaskStatus = exports.assignDeviceToSmartHomeTask = exports.deleteSmartHomeTask = exports.updateSmartHomeTask = exports.addSmartHomeTaskTags = exports.addSmartHomeTask = exports.searchSmartHomeTasks = exports.getSmartHomeTasksByTags = exports.getSmartHomeTask = exports.loadMoreSmartHomeTasks = exports.getInitialSmartHomeTasks = exports.Principal = void 0;
+exports.isValidUUID = exports.deleteDevice = exports.toggleDevice = exports.updateDevice = exports.addDevice = exports.turnOffDevice = exports.turnOnDevice = exports.getActiveDevices = exports.getDevicesByType = exports.getDevice = exports.getDevices = exports.searchDevices = exports.Principal = void 0;
 function _defineProperty(obj, key, value) {
     if (key in obj) {
         Object.defineProperty(obj, key, {
@@ -1162,224 +1162,150 @@ function v4(options, buf, offset) {
 }
 var v4_default = v4;
 // src/index.ts
-var smartHomeTaskStorage = new StableBTreeMap(0, 44, 512);
-var initialLoadSize = 4;
-function getInitialSmartHomeTasks() {
-    const initialTasks = smartHomeTaskStorage.values().slice(0, initialLoadSize);
-    return Result.Ok(initialTasks);
-}
-exports.getInitialSmartHomeTasks = getInitialSmartHomeTasks;
-function loadMoreSmartHomeTasks(offset, limit) {
-    const moreTasks = smartHomeTaskStorage.values().slice(offset, offset + limit);
-    return Result.Ok(moreTasks);
-}
-exports.loadMoreSmartHomeTasks = loadMoreSmartHomeTasks;
-function getSmartHomeTask(id) {
-    return match(smartHomeTaskStorage.get(id), {
-        Some: (task)=>{
-            if (task.assignedTo.toString() !== ic.caller().toString()) {
-                return Result.Err("You are not authorized to access this task");
-            }
-            return Result.Ok(task);
-        },
-        None: ()=>Result.Err(`SmartHomeTask with id:${id} not found`)
-    });
-}
-exports.getSmartHomeTask = getSmartHomeTask;
-function getSmartHomeTasksByTags(tag) {
-    const relatedTasks = smartHomeTaskStorage.values().filter((task)=>task.tags.includes(tag)
-    );
-    return Result.Ok(relatedTasks);
-}
-exports.getSmartHomeTasksByTags = getSmartHomeTasksByTags;
-function searchSmartHomeTasks(searchInput) {
-    const lowerCaseSearchInput = searchInput.toLowerCase();
+var deviceStorage = new StableBTreeMap(0, 44, 1024);
+function searchDevices(query) {
     try {
-        const searchedTasks = smartHomeTaskStorage.values().filter((task)=>task.title.toLowerCase().includes(lowerCaseSearchInput) || task.description.toLowerCase().includes(lowerCaseSearchInput)
+        const lowerCaseQuery = query.toLowerCase();
+        const filteredDevices = deviceStorage.values().filter((device)=>device.brand.toLowerCase().includes(lowerCaseQuery) || device.type.toLowerCase().includes(lowerCaseQuery)
         );
-        return Result.Ok(searchedTasks);
-    } catch (err) {
-        return Result.Err("Error finding the smart home task");
+        return Result.Ok(filteredDevices);
+    } catch (error) {
+        return Result.Err(`Error searching for a device: ${error}`);
     }
 }
-exports.searchSmartHomeTasks = searchSmartHomeTasks;
-function addSmartHomeTask(payload) {
-    if (!payload.title || !payload.description || !payload.assignedTo || !payload.dueDate) {
-        return Result.Err("Missing or invalid input data");
-    }
+exports.searchDevices = searchDevices;
+function getDevices() {
     try {
-        const newSmartHomeTask = _objectSpread({
-            id: v4_default(),
-            createdDate: ic.time(),
-            updatedDate: Opt.None,
-            status: "Pending",
-            priority: "",
-            comments: []
-        }, payload);
-        smartHomeTaskStorage.insert(newSmartHomeTask.id, newSmartHomeTask);
-        return Result.Ok(newSmartHomeTask);
-    } catch (err) {
-        return Result.Err("Issue encountered when creating smart home task");
+        const devices = deviceStorage.values();
+        return Result.Ok(devices);
+    } catch (error) {
+        return Result.Err(`Error getting devices: ${error}`);
     }
 }
-exports.addSmartHomeTask = addSmartHomeTask;
-function addSmartHomeTaskTags(id, tags) {
-    if (!tags || tags.length === 0) {
-        return Result.Err("Invalid tags");
+exports.getDevices = getDevices;
+function getDevice(id) {
+    return match(deviceStorage.get(id), {
+        Some: (device)=>Result.Ok(device)
+        ,
+        None: ()=>Result.Err(`Device with id=${id} not found`)
+    });
+}
+exports.getDevice = getDevice;
+function getDevicesByType(deviceType) {
+    try {
+        const devicesByType = deviceStorage.values().filter((device)=>device.type.toLowerCase() === deviceType.toLowerCase()
+        );
+        return Result.Ok(devicesByType);
+    } catch (error) {
+        return Result.Err(`Error getting devices by type: ${error}`);
     }
-    return match(smartHomeTaskStorage.get(id), {
-        Some: (task)=>{
-            if (task.assignedTo.toString() !== ic.caller().toString()) {
-                return Result.Err("You are not authorized to access this task");
+}
+exports.getDevicesByType = getDevicesByType;
+function getActiveDevices() {
+    try {
+        const activeDevices = deviceStorage.values().filter((device)=>device.isOn
+        );
+        return Result.Ok(activeDevices);
+    } catch (error) {
+        return Result.Err(`Error getting active devices: ${error}`);
+    }
+}
+exports.getActiveDevices = getActiveDevices;
+function turnOnDevice(id) {
+    return match(deviceStorage.get(id), {
+        Some: (device)=>{
+            if (device.isOn) {
+                return Result.Err(`Device with id=${id} is already on`);
             }
-            const updatedTask = _objectSpread({}, task, {
-                tags: [
-                    ...task.tags,
-                    ...tags
-                ],
-                updatedDate: Opt.Some(ic.time())
+            const newDevice = _objectSpread({}, device, {
+                isOn: true
             });
-            smartHomeTaskStorage.insert(task.id, updatedTask);
-            return Result.Ok(updatedTask);
+            deviceStorage.insert(id, newDevice);
+            return Result.Ok(newDevice);
         },
-        None: ()=>Result.Err(`SmartHomeTask with id:${id} not found`)
+        None: ()=>Result.Err(`Device with id=${id} not found`)
     });
 }
-exports.addSmartHomeTaskTags = addSmartHomeTaskTags;
-function updateSmartHomeTask(id, payload) {
-    return match(smartHomeTaskStorage.get(id), {
-        Some: (task)=>{
-            if (task.assignedTo.toString() !== ic.caller().toString()) {
-                return Result.Err("You are not authorized to access this task");
+exports.turnOnDevice = turnOnDevice;
+function turnOffDevice(id) {
+    return match(deviceStorage.get(id), {
+        Some: (device)=>{
+            if (!device.isOn) {
+                return Result.Err(`Device with id=${id} is already off`);
             }
-            const updatedTask = _objectSpread({}, task, payload, {
-                updatedDate: Opt.Some(ic.time())
+            const newDevice = _objectSpread({}, device, {
+                isOn: false
             });
-            smartHomeTaskStorage.insert(task.id, updatedTask);
-            return Result.Ok(updatedTask);
+            deviceStorage.insert(id, newDevice);
+            return Result.Ok(newDevice);
         },
-        None: ()=>Result.Err(`SmartHomeTask with id:${id} not found`)
+        None: ()=>Result.Err(`Device with id=${id} not found`)
     });
 }
-exports.updateSmartHomeTask = updateSmartHomeTask;
-function deleteSmartHomeTask(id) {
-    return match(smartHomeTaskStorage.get(id), {
-        Some: (task)=>{
-            if (task.assignedTo.toString() !== ic.caller().toString()) {
-                return Result.Err("You are not authorized to access this task");
-            }
-            smartHomeTaskStorage.remove(id);
-            return Result.Ok(task);
-        },
-        None: ()=>Result.Err(`SmartHomeTask with id:${id} not found, could not be deleted`)
-    });
+exports.turnOffDevice = turnOffDevice;
+function addDevice(device) {
+    try {
+        device.id = v4_default();
+        device.isOn = false;
+        if (!device.type || !device.brand) {
+            return Result.Err("Missing required fields in the device object");
+        }
+        device.updatedAt = Opt.Some(ic.time());
+        deviceStorage.insert(device.id, device);
+        return Result.Ok(device);
+    } catch (error) {
+        return Result.Err(`Error adding device: ${error}`);
+    }
 }
-exports.deleteSmartHomeTask = deleteSmartHomeTask;
-function assignDeviceToSmartHomeTask(taskId, device) {
-    return match(smartHomeTaskStorage.get(taskId), {
-        Some: (task)=>{
-            if (task.assignedTo.toString() !== ic.caller().toString()) {
-                return Result.Err("You are not authorized to access this task");
+exports.addDevice = addDevice;
+function updateDevice(id, device) {
+    return match(deviceStorage.get(id), {
+        Some: (existingDevice)=>{
+            if (!device.type || !device.brand) {
+                return Result.Err("Missing required fields in the device object");
             }
-            const updatedDevices = [
-                ...task.devices,
-                device
-            ];
-            const updatedTask = _objectSpread({}, task, {
-                devices: updatedDevices,
-                updatedDate: Opt.Some(ic.time())
+            const updatedDevice = _objectSpread({}, existingDevice, device, {
+                updatedAt: Opt.Some(ic.time())
             });
-            smartHomeTaskStorage.insert(task.id, updatedTask);
-            return Result.Ok(updatedTask);
+            deviceStorage.insert(id, updatedDevice);
+            return Result.Ok(updatedDevice);
         },
-        None: ()=>Result.Err(`SmartHomeTask with id:${taskId} not found`)
+        None: ()=>Result.Err(`Device with id=${id} does not exist`)
     });
 }
-exports.assignDeviceToSmartHomeTask = assignDeviceToSmartHomeTask;
-function changeSmartHomeTaskStatus(id, newStatus) {
-    return match(smartHomeTaskStorage.get(id), {
-        Some: (task)=>{
-            if (task.assignedTo.toString() !== ic.caller().toString()) {
-                return Result.Err("You are not authorized to change the task status");
-            }
-            const updatedTask = _objectSpread({}, task, {
-                status: newStatus,
-                updatedDate: Opt.Some(ic.time())
+exports.updateDevice = updateDevice;
+function toggleDevice(id) {
+    return match(deviceStorage.get(id), {
+        Some: (device)=>{
+            const newDevice = _objectSpread({}, device, {
+                isOn: !device.isOn
             });
-            smartHomeTaskStorage.insert(task.id, updatedTask);
-            return Result.Ok(updatedTask);
+            deviceStorage.insert(id, newDevice);
+            return Result.Ok(newDevice);
         },
-        None: ()=>Result.Err(`SmartHomeTask with id:${id} not found`)
+        None: ()=>Result.Err(`Device with id=${id} not found`)
     });
 }
-exports.changeSmartHomeTaskStatus = changeSmartHomeTaskStatus;
-function setSmartHomeTaskPriority(id, priority) {
-    return match(smartHomeTaskStorage.get(id), {
-        Some: (task)=>{
-            if (task.assignedTo.toString() !== ic.caller().toString()) {
-                return Result.Err("You are not authorized to set task priority");
-            }
-            const updatedTask = _objectSpread({}, task, {
-                priority,
-                updatedDate: Opt.Some(ic.time())
-            });
-            smartHomeTaskStorage.insert(task.id, updatedTask);
-            return Result.Ok(updatedTask);
-        },
-        None: ()=>Result.Err(`SmartHomeTask with id:${id} not found`)
-    });
+exports.toggleDevice = toggleDevice;
+function deleteDevice(id) {
+    try {
+        if (!isValidUUID(id)) {
+            return Result.Err("Invalid device ID");
+        }
+        const deletedDevice = deviceStorage.remove(id);
+        if (!deletedDevice) {
+            return Result.Err(`Device with ID ${id} does not exist`);
+        }
+        return Result.Ok(deletedDevice);
+    } catch (error) {
+        return Result.Err(`Error deleting device: ${error}`);
+    }
 }
-exports.setSmartHomeTaskPriority = setSmartHomeTaskPriority;
-function sendSmartHomeTaskDueDateReminder(id) {
-    const now = new Date().toISOString();
-    return match(smartHomeTaskStorage.get(id), {
-        Some: (task)=>{
-            if (task.dueDate < now && task.status !== "Completed") {
-                return Result.Ok("Task is overdue. Please complete it.");
-            } else {
-                return Result.Err("Task is not overdue or already completed.");
-            }
-        },
-        None: ()=>Result.Err(`SmartHomeTask with id:${id} not found`)
-    });
+exports.deleteDevice = deleteDevice;
+function isValidUUID(id) {
+    return /^[\da-f]{8}-([\da-f]{4}-){3}[\da-f]{12}$/i.test(id);
 }
-exports.sendSmartHomeTaskDueDateReminder = sendSmartHomeTaskDueDateReminder;
-function getSmartHomeTasksByStatus(status) {
-    const tasksByStatus = smartHomeTaskStorage.values().filter((task)=>task.status === status
-    );
-    return Result.Ok(tasksByStatus);
-}
-exports.getSmartHomeTasksByStatus = getSmartHomeTasksByStatus;
-function getSmartHomeTasksByCreator(creator) {
-    const creatorTasks = smartHomeTaskStorage.values().filter((task)=>task.assignedTo.toString() === creator.toString()
-    );
-    return Result.Ok(creatorTasks);
-}
-exports.getSmartHomeTasksByCreator = getSmartHomeTasksByCreator;
-function getOverdueSmartHomeTasks() {
-    const now = new Date().toISOString();
-    const overdueTasks = smartHomeTaskStorage.values().filter((task)=>task.dueDate < now && task.status !== "Completed"
-    );
-    return Result.Ok(overdueTasks);
-}
-exports.getOverdueSmartHomeTasks = getOverdueSmartHomeTasks;
-function addSmartHomeTaskComment(id, comment) {
-    return match(smartHomeTaskStorage.get(id), {
-        Some: (task)=>{
-            const updatedComments = [
-                ...task.comments,
-                comment
-            ];
-            const updatedTask = _objectSpread({}, task, {
-                comments: updatedComments
-            });
-            smartHomeTaskStorage.insert(task.id, updatedTask);
-            return Result.Ok(updatedTask);
-        },
-        None: ()=>Result.Err(`SmartHomeTask with id:${id} not found`)
-    });
-}
-exports.addSmartHomeTaskComment = addSmartHomeTaskComment;
+exports.isValidUUID = isValidUUID;
 globalThis.crypto = {
     getRandomValues: ()=>{
         let array = new Uint8Array(32);

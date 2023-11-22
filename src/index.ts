@@ -9,319 +9,205 @@ import {
   nat64,
   ic,
   Opt,
-  Principal,
 } from 'azle';
 import { v4 as uuidv4 } from 'uuid';
 
-type Device = Record<{
+type SmartHomeDevice = Record<{
+  isOn: boolean;
   id: string;
-  name: string;
   type: string;
-  status: string;
-  room: string;
-  createdBy: Principal;
+  brand: string;
+  updatedAt: Opt<nat64>;
 }>;
 
-type SmartHomeTask = Record<{
-  id: string;
-  title: string;
-  description: string;
-  createdDate: nat64;
-  updatedDate: Opt<nat64>;
-  dueDate: string;
-  assignedTo: string;
-  tags: Vec<string>;
-  status: string;
-  priority: string;
-  comments: Vec<string>;
-  devices: Vec<Device>;
-}>;
+const deviceStorage = new StableBTreeMap<string, SmartHomeDevice>(0, 44, 1024);
 
-type SmartHomeTaskPayload = Record<{
-  title: string;
-  description: string;
-  assignedTo: string;
-  dueDate: string;
-  tags: Vec<string>;
-  devices: Vec<Device>;
-}>;
-
-const smartHomeTaskStorage = new StableBTreeMap<string, SmartHomeTask>(0, 44, 512);
-
-// Number of Smart Home Tasks to load initially
-const initialLoadSize = 4;
-
-// Load the Initial batch of Smart Home Tasks
 $query
-export function getInitialSmartHomeTasks(): Result<Vec<SmartHomeTask>, string> {
-  const initialTasks = smartHomeTaskStorage.values().slice(0, initialLoadSize);
-  return Result.Ok(initialTasks);
-}
-
-// Load more Smart Home Tasks as the user scrolls down
-$query
-export function loadMoreSmartHomeTasks(offset: number, limit: number): Result<Vec<SmartHomeTask>, string> {
-  const moreTasks = smartHomeTaskStorage.values().slice(offset, offset + limit);
-  return Result.Ok(moreTasks);
-}
-
-// Loading a Specific Smart Home Task
-$query
-export function getSmartHomeTask(id: string): Result<SmartHomeTask, string> {
-  return match(smartHomeTaskStorage.get(id), {
-    Some: (task) => {
-      if (task.assignedTo.toString() !== ic.caller().toString()) {
-        return Result.Err<SmartHomeTask, string>('You are not authorized to access this task');
-      }
-      return Result.Ok<SmartHomeTask, string>(task);
-    },
-    None: () => Result.Err<SmartHomeTask, string>(`SmartHomeTask with id:${id} not found`),
-  });
-}
-
-// Get Smart Home Tasks by Tags
-$query
-export function getSmartHomeTasksByTags(tag: string): Result<Vec<SmartHomeTask>, string> {
-  const relatedTasks = smartHomeTaskStorage.values().filter((task) => task.tags.includes(tag));
-  return Result.Ok(relatedTasks);
-}
-
-// Search Smart Home Tasks
-$query
-export function searchSmartHomeTasks(searchInput: string): Result<Vec<SmartHomeTask>, string> {
-  const lowerCaseSearchInput = searchInput.toLowerCase();
+export function searchDevices(query: string): Result<Vec<SmartHomeDevice>, string> {
   try {
-    const searchedTasks = smartHomeTaskStorage.values().filter(
-      (task) =>
-        task.title.toLowerCase().includes(lowerCaseSearchInput) ||
-        task.description.toLowerCase().includes(lowerCaseSearchInput)
-    );
-    return Result.Ok(searchedTasks);
-  } catch (err) {
-    return Result.Err('Error finding the smart home task');
+      const lowerCaseQuery = query.toLowerCase();
+      const filteredDevices = deviceStorage.values().filter(
+          (device) =>
+              device.brand.toLowerCase().includes(lowerCaseQuery) ||
+              device.type.toLowerCase().includes(lowerCaseQuery)
+      );
+      return Result.Ok(filteredDevices);
+  } catch (error) {
+      return Result.Err(`Error searching for a device: ${error}`);
   }
 }
 
-// Add Smart Home Task
-$update
-export function addSmartHomeTask(payload: SmartHomeTaskPayload): Result<SmartHomeTask, string> {
-  // Validate input data
-  if (!payload.title || !payload.description || !payload.assignedTo || !payload.dueDate) {
-    return Result.Err<SmartHomeTask, string>('Missing or invalid input data');
-  }
-
+$query
+export function getDevices(): Result<Vec<SmartHomeDevice>, string> {
   try {
-    const newSmartHomeTask: SmartHomeTask = {
-      id: uuidv4(),
-      createdDate: ic.time(),
-      updatedDate: Opt.None,
-      status: 'Pending',
-      priority: '',
-      comments: [],
-      ...payload,
-    };
-    smartHomeTaskStorage.insert(newSmartHomeTask.id, newSmartHomeTask);
-    return Result.Ok<SmartHomeTask, string>(newSmartHomeTask);
-  } catch (err) {
-    return Result.Err<SmartHomeTask, string>('Issue encountered when creating smart home task');
+      const devices = deviceStorage.values();
+      return Result.Ok(devices);
+  } catch (error) {
+      return Result.Err(`Error getting devices: ${error}`);
   }
 }
 
-// Add Tags to the Smart Home Task created
-$update
-export function addSmartHomeTaskTags(id: string, tags: Vec<string>): Result<SmartHomeTask, string> {
-  // Validate input data
-  if (!tags || tags.length === 0) {
-    return Result.Err<SmartHomeTask, string>('Invalid tags');
+$query
+export function getDevice(id: string): Result<SmartHomeDevice, string> {
+  return match(deviceStorage.get(id), {
+      Some: (device) => Result.Ok<SmartHomeDevice, string>(device),
+      None: () => Result.Err<SmartHomeDevice, string>(`Device with id=${id} not found`),
+  }) as Result<SmartHomeDevice, string>;
+}
+
+$query
+export function getDevicesByType(deviceType: string): Result<Vec<SmartHomeDevice>, string> {
+  try {
+      const devicesByType = deviceStorage
+          .values()
+          .filter((device) => device.type.toLowerCase() === deviceType.toLowerCase());
+      return Result.Ok(devicesByType);
+  } catch (error) {
+      return Result.Err(`Error getting devices by type: ${error}`);
   }
-
-  return match(smartHomeTaskStorage.get(id), {
-    Some: (task) => {
-      if (task.assignedTo.toString() !== ic.caller().toString()) {
-        return Result.Err<SmartHomeTask, string>('You are not authorized to access this task');
-      }
-      const updatedTask: SmartHomeTask = {
-        ...task,
-        tags: [...task.tags, ...tags],
-        updatedDate: Opt.Some(ic.time()),
-      };
-      smartHomeTaskStorage.insert(task.id, updatedTask);
-      return Result.Ok<SmartHomeTask, string>(updatedTask);
-    },
-    None: () => Result.Err<SmartHomeTask, string>(`SmartHomeTask with id:${id} not found`),
-  });
 }
 
-// Update Smart Home Task
-$update
-export function updateSmartHomeTask(id: string, payload: SmartHomeTaskPayload): Result<SmartHomeTask, string> {
-  return match(smartHomeTaskStorage.get(id), {
-    Some: (task) => {
-      // Authorization Check
-      if (task.assignedTo.toString() !== ic.caller().toString()) {
-        return Result.Err<SmartHomeTask, string>('You are not authorized to access this task');
-      }
-      const updatedTask: SmartHomeTask = { ...task, ...payload, updatedDate: Opt.Some(ic.time()) };
-      smartHomeTaskStorage.insert(task.id, updatedTask);
-      return Result.Ok<SmartHomeTask, string>(updatedTask);
-    },
-    None: () => Result.Err<SmartHomeTask, string>(`SmartHomeTask with id:${id} not found`),
-  });
-}
-
-// Delete Smart Home Task
-$update
-export function deleteSmartHomeTask(id: string): Result<SmartHomeTask, string> {
-  return match(smartHomeTaskStorage.get(id), {
-    Some: (task) => {
-      // Authorization Check
-      if (task.assignedTo.toString() !== ic.caller().toString()) {
-        return Result.Err<SmartHomeTask, string>('You are not authorized to access this task');
-      }
-      smartHomeTaskStorage.remove(id);
-      return Result.Ok<SmartHomeTask, string>(task);
-    },
-    None: () => Result.Err<SmartHomeTask, string>(`SmartHomeTask with id:${id} not found, could not be deleted`),
-  });
-}
-
-// Assign a Smart Home Task to a Device
-$update
-export function assignDeviceToSmartHomeTask(
-  taskId: string,
-  device: Device
-): Result<SmartHomeTask, string> {
-  return match(smartHomeTaskStorage.get(taskId), {
-    Some: (task) => {
-      if (task.assignedTo.toString() !== ic.caller().toString()) {
-        return Result.Err<SmartHomeTask, string>('You are not authorized to access this task');
-      }
-      const updatedDevices: Vec<Device> = [...task.devices, device];
-      const updatedTask: SmartHomeTask = {
-        ...task,
-        devices: updatedDevices,
-        updatedDate: Opt.Some(ic.time()),
-      };
-      smartHomeTaskStorage.insert(task.id, updatedTask);
-      return Result.Ok<SmartHomeTask, string>(updatedTask);
-    },
-    None: () => Result.Err<SmartHomeTask, string>(`SmartHomeTask with id:${taskId} not found`),
-  });
-}
-
-// Change Smart Home Task Status
-$update
-export function changeSmartHomeTaskStatus(
-  id: string,
-  newStatus: string
-): Result<SmartHomeTask, string> {
-  return match(smartHomeTaskStorage.get(id), {
-    Some: (task) => {
-      if (task.assignedTo.toString() !== ic.caller().toString()) {
-        return Result.Err<SmartHomeTask, string>('You are not authorized to change the task status');
-      }
-      const updatedTask: SmartHomeTask = {
-        ...task,
-        status: newStatus,
-        updatedDate: Opt.Some(ic.time()),
-      };
-      smartHomeTaskStorage.insert(task.id, updatedTask);
-      return Result.Ok<SmartHomeTask, string>(updatedTask);
-    },
-    None: () => Result.Err<SmartHomeTask, string>(`SmartHomeTask with id:${id} not found`),
-  });
-}
-
-// Set Smart Home Task Priority
-$update
-export function setSmartHomeTaskPriority(
-  id: string,
-  priority: string
-): Result<SmartHomeTask, string> {
-  return match(smartHomeTaskStorage.get(id), {
-    Some: (task) => {
-      if (task.assignedTo.toString() !== ic.caller().toString()) {
-        return Result.Err<SmartHomeTask, string>('You are not authorized to set task priority');
-      }
-      const updatedTask: SmartHomeTask = { ...task, priority, updatedDate: Opt.Some(ic.time()) };
-      smartHomeTaskStorage.insert(task.id, updatedTask);
-      return Result.Ok<SmartHomeTask, string>(updatedTask);
-    },
-    None: () => Result.Err<SmartHomeTask, string>(`SmartHomeTask with id:${id} not found`),
-  });
-}
-
-// Smart Home Task Due Date Reminder
-$update
-export function sendSmartHomeTaskDueDateReminder(id: string): Result<string, string> {
-  const now = new Date().toISOString();
-  return match(smartHomeTaskStorage.get(id), {
-    Some: (task) => {
-      if (task.dueDate < now && task.status !== 'Completed') {
-        return Result.Ok<string, string>('Task is overdue. Please complete it.');
-      } else {
-        return Result.Err<string, string>('Task is not overdue or already completed.');
-      }
-    },
-    None: () => Result.Err<string, string>(`SmartHomeTask with id:${id} not found`),
-  });
-}
-
-// Get Smart Home Tasks by Status
 $query
-export function getSmartHomeTasksByStatus(
-  status: string
-): Result<Vec<SmartHomeTask>, string> {
-  const tasksByStatus = smartHomeTaskStorage.values().filter((task) => task.status === status);
-  return Result.Ok(tasksByStatus);
+export function getActiveDevices(): Result<Vec<SmartHomeDevice>, string> {
+  try {
+      const activeDevices = deviceStorage.values().filter((device) => device.isOn);
+      return Result.Ok(activeDevices);
+  } catch (error) {
+      return Result.Err(`Error getting active devices: ${error}`);
+  }
 }
 
-// Get Smart Home Tasks by Creator
-$query
-export function getSmartHomeTasksByCreator(
-  creator: Principal
-): Result<Vec<SmartHomeTask>, string> {
-  const creatorTasks = smartHomeTaskStorage.values().filter((task) => task.assignedTo.toString() === creator.toString());
-  return Result.Ok(creatorTasks);
-}
-
-// Get Overdue Smart Home Tasks
-$query
-export function getOverdueSmartHomeTasks(): Result<Vec<SmartHomeTask>, string> {
-  const now = new Date().toISOString();
-  const overdueTasks = smartHomeTaskStorage.values().filter(
-    (task) => task.dueDate < now && task.status !== 'Completed'
-  );
-  return Result.Ok(overdueTasks);
-}
-
-// Smart Home Task Comments
 $update
-export function addSmartHomeTaskComment(
-  id: string,
-  comment: string
-): Result<SmartHomeTask, string> {
-  return match(smartHomeTaskStorage.get(id), {
-    Some: (task) => {
-      const updatedComments = [...task.comments, comment];
-      const updatedTask: SmartHomeTask = { ...task, comments: updatedComments };
-      smartHomeTaskStorage.insert(task.id, updatedTask);
-      return Result.Ok<SmartHomeTask, string>(updatedTask);
-    },
-    None: () => Result.Err<SmartHomeTask, string>(`SmartHomeTask with id:${id} not found`),
-  });
+export function turnOnDevice(id: string): Result<SmartHomeDevice, string> {
+  return match(deviceStorage.get(id), {
+      Some: (device) => {
+          if (device.isOn) {
+              return Result.Err<SmartHomeDevice, string>(`Device with id=${id} is already on`);
+          }
+
+          const newDevice: SmartHomeDevice = { ...device, isOn: true };
+          deviceStorage.insert(id, newDevice);
+
+          return Result.Ok(newDevice);
+      },
+      None: () => Result.Err<SmartHomeDevice, string>(`Device with id=${id} not found`),
+  }) as Result<SmartHomeDevice, string>;
 }
 
-// UUID workaround
-(globalThis as any).crypto = {
+$update
+export function turnOffDevice(id: string): Result<SmartHomeDevice, string> {
+  return match(deviceStorage.get(id), {
+      Some: (device) => {
+          if (!device.isOn) {
+              return Result.Err<SmartHomeDevice, string>(`Device with id=${id} is already off`);
+          }
+
+          const newDevice: SmartHomeDevice = { ...device, isOn: false };
+          deviceStorage.insert(id, newDevice);
+
+          return Result.Ok(newDevice);
+      },
+      None: () => Result.Err<SmartHomeDevice, string>(`Device with id=${id} not found`),
+  }) as Result<SmartHomeDevice, string>;
+}
+
+$update
+export function addDevice(device: SmartHomeDevice): Result<SmartHomeDevice, string> {
+  try {
+      // Generate a unique ID for the device
+      device.id = uuidv4();
+      // Initialize isOn to false when adding a new device
+      device.isOn = false;
+
+      // Validate the device object
+      if (!device.type || !device.brand) {
+          return Result.Err('Missing required fields in the device object');
+      }
+
+      // Update the updatedAt field with the current timestamp
+      device.updatedAt = Opt.Some(ic.time());
+
+      // Add the device to deviceStorage
+      deviceStorage.insert(device.id, device);
+
+      return Result.Ok(device);
+  } catch (error) {
+      return Result.Err(`Error adding device: ${error}`);
+  }
+}
+
+$update
+export function updateDevice(id: string, device: SmartHomeDevice): Result<SmartHomeDevice, string> {
+  return match(deviceStorage.get(id), {
+      Some: (existingDevice) => {
+          // Validate the updated device object
+          if (!device.type || !device.brand) {
+              return Result.Err('Missing required fields in the device object');
+          }
+
+          // Create a new device object with the updated fields
+          const updatedDevice: SmartHomeDevice = {
+              ...existingDevice,
+              ...device,
+              updatedAt: Opt.Some(ic.time()),
+          };
+
+          // Update the device in deviceStorage
+          deviceStorage.insert(id, updatedDevice);
+
+          return Result.Ok(updatedDevice);
+      },
+      None: () => Result.Err<SmartHomeDevice, string>(`Device with id=${id} does not exist`),
+  }) as Result<SmartHomeDevice, string>;
+}
+
+$update
+export function toggleDevice(id: string): Result<SmartHomeDevice, string> {
+  return match(deviceStorage.get(id), {
+      Some: (device) => {
+          const newDevice: SmartHomeDevice = { ...device, isOn: !device.isOn };
+          deviceStorage.insert(id, newDevice);
+
+          return Result.Ok(newDevice);
+      },
+      None: () => Result.Err<SmartHomeDevice, string>(`Device with id=${id} not found`),
+  }) as Result<SmartHomeDevice, string>;
+}
+
+$update
+export function deleteDevice(id: string): Result<Opt<SmartHomeDevice>, string> {
+  try {
+      // Validate the id parameter
+      if (!isValidUUID(id)) {
+          return Result.Err('Invalid device ID');
+      }
+
+      // Delete the device from deviceStorage
+      const deletedDevice = deviceStorage.remove(id);
+      if (!deletedDevice) {
+          return Result.Err(`Device with ID ${id} does not exist`);
+      }
+
+      return Result.Ok(deletedDevice);
+  } catch (error) {
+      return Result.Err(`Error deleting device: ${error}`);
+  }
+}
+
+export function isValidUUID(id: string): boolean {
+  return /^[\da-f]{8}-([\da-f]{4}-){3}[\da-f]{12}$/i.test(id);
+}
+
+// A workaround to make the uuid package work with Azle
+globalThis.crypto = {
   // @ts-ignore
   getRandomValues: () => {
-    let array = new Uint8Array(32);
+      let array = new Uint8Array(32);
 
-    for (let i = 0; i < array.length; i++) {
-      array[i] = Math.floor(Math.random() * 256);
-    }
+      for (let i = 0; i < array.length; i++) {
+          array[i] = Math.floor(Math.random() * 256);
+      }
 
-    return array;
+      return array;
   },
 };
