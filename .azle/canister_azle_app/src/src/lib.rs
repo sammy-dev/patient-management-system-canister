@@ -27,7 +27,7 @@ thread_local! {
     std::cell::RefCell::new("".to_string()); static MANUAL_REF_CELL : std::cell::RefCell
     < bool > = std::cell::RefCell::new(false);
 }
-static MAIN_JS: &'static str = "\n            // TODO we should centralize/standardize where we add global variables to the JS, we are doing this in multiple places (i.e. the exports variable is not here, found in init/post_upgrade)\n            globalThis.console = {\n                ...globalThis.console,\n                log: (...args) => {\n                    ic.print(...args);\n                }\n            };\n\n            \nObject.defineProperty(exports, \"__esModule\", {\n    value: true\n});\nexports.isValidUUID = exports.deleteDevice = exports.toggleDevice = exports.updateDevice = exports.addDevice = exports.turnOffDevice = exports.turnOnDevice = exports.getActiveDevices = exports.getDevicesByType = exports.getDevice = exports.getDevices = exports.searchDevices = exports.Principal = void 0;\nfunction _defineProperty(obj, key, value) {\n    if (key in obj) {\n        Object.defineProperty(obj, key, {\n            value: value,\n            enumerable: true,\n            configurable: true,\n            writable: true\n        });\n    } else {\n        obj[key] = value;\n    }\n    return obj;\n}\nfunction _objectSpread(target) {\n    for(var i2 = 1; i2 < arguments.length; i2++){\n        var source = arguments[i2] != null ? arguments[i2] : {};\n        var ownKeys = Object.keys(source);\n        if (typeof Object.getOwnPropertySymbols === \"function\") {\n            ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function(sym) {\n                return Object.getOwnPropertyDescriptor(source, sym).enumerable;\n            }));\n        }\n        ownKeys.forEach(function(key) {\n            _defineProperty(target, key, source[key]);\n        });\n    }\n    return target;\n}\nvar __create = Object.create;\nvar __defProp = Object.defineProperty;\nvar __getOwnPropDesc = Object.getOwnPropertyDescriptor;\nvar __getOwnPropNames = Object.getOwnPropertyNames;\nvar __getProtoOf = Object.getPrototypeOf;\nvar __hasOwnProp = Object.prototype.hasOwnProperty;\nvar __markAsModule = (target)=>__defProp(target, \"__esModule\", {\n        value: true\n    })\n;\nvar __commonJS = (cb, mod)=>function __require() {\n        return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = {\n            exports: {}\n        }).exports, mod), mod.exports;\n    }\n;\nvar __reExport = (target, module2, copyDefault, desc)=>{\n    if (module2 && typeof module2 === \"object\" || typeof module2 === \"function\") {\n        for (let key of __getOwnPropNames(module2))if (!__hasOwnProp.call(target, key) && (copyDefault || key !== \"default\")) __defProp(target, key, {\n            get: ()=>module2[key]\n            ,\n            enumerable: !(desc = __getOwnPropDesc(module2, key)) || desc.enumerable\n        });\n    }\n    return target;\n};\nvar __toESM = (module2, isNodeMode)=>{\n    return __reExport(__markAsModule(__defProp(module2 != null ? __create(__getProtoOf(module2)) : {}, \"default\", !isNodeMode && module2 && module2.__esModule ? {\n        get: ()=>module2.default\n        ,\n        enumerable: true\n    } : {\n        value: module2,\n        enumerable: true\n    })), module2);\n};\n// node_modules/js-sha256/src/sha256.js\nvar require_sha256 = __commonJS({\n    \"node_modules/js-sha256/src/sha256.js\" (exports1, module) {\n        (function() {\n            \n            var ERROR = \"input is invalid type\";\n            var WINDOW = typeof window === \"object\";\n            var root = WINDOW ? window : {};\n            if (root.JS_SHA256_NO_WINDOW) {\n                WINDOW = false;\n            }\n            var WEB_WORKER = !WINDOW && typeof self === \"object\";\n            var NODE_JS = !root.JS_SHA256_NO_NODE_JS && typeof process === \"object\" && process.versions && process.versions.node;\n            if (NODE_JS) {\n                root = global;\n            } else if (WEB_WORKER) {\n                root = self;\n            }\n            var COMMON_JS = !root.JS_SHA256_NO_COMMON_JS && typeof module === \"object\" && module.exports;\n            var AMD = typeof define === \"function\" && define.amd;\n            var ARRAY_BUFFER = !root.JS_SHA256_NO_ARRAY_BUFFER && typeof ArrayBuffer !== \"undefined\";\n            var HEX_CHARS = \"0123456789abcdef\".split(\"\");\n            var EXTRA = [\n                -2147483648,\n                8388608,\n                32768,\n                128\n            ];\n            var SHIFT = [\n                24,\n                16,\n                8,\n                0\n            ];\n            var K = [\n                1116352408,\n                1899447441,\n                3049323471,\n                3921009573,\n                961987163,\n                1508970993,\n                2453635748,\n                2870763221,\n                3624381080,\n                310598401,\n                607225278,\n                1426881987,\n                1925078388,\n                2162078206,\n                2614888103,\n                3248222580,\n                3835390401,\n                4022224774,\n                264347078,\n                604807628,\n                770255983,\n                1249150122,\n                1555081692,\n                1996064986,\n                2554220882,\n                2821834349,\n                2952996808,\n                3210313671,\n                3336571891,\n                3584528711,\n                113926993,\n                338241895,\n                666307205,\n                773529912,\n                1294757372,\n                1396182291,\n                1695183700,\n                1986661051,\n                2177026350,\n                2456956037,\n                2730485921,\n                2820302411,\n                3259730800,\n                3345764771,\n                3516065817,\n                3600352804,\n                4094571909,\n                275423344,\n                430227734,\n                506948616,\n                659060556,\n                883997877,\n                958139571,\n                1322822218,\n                1537002063,\n                1747873779,\n                1955562222,\n                2024104815,\n                2227730452,\n                2361852424,\n                2428436474,\n                2756734187,\n                3204031479,\n                3329325298\n            ];\n            var OUTPUT_TYPES = [\n                \"hex\",\n                \"array\",\n                \"digest\",\n                \"arrayBuffer\"\n            ];\n            var blocks = [];\n            if (root.JS_SHA256_NO_NODE_JS || !Array.isArray) {\n                Array.isArray = function(obj) {\n                    return Object.prototype.toString.call(obj) === \"[object Array]\";\n                };\n            }\n            if (ARRAY_BUFFER && (root.JS_SHA256_NO_ARRAY_BUFFER_IS_VIEW || !ArrayBuffer.isView)) {\n                ArrayBuffer.isView = function(obj) {\n                    return typeof obj === \"object\" && obj.buffer && obj.buffer.constructor === ArrayBuffer;\n                };\n            }\n            var createOutputMethod = function(outputType, is2242) {\n                return function(message) {\n                    return new Sha256(is2242, true).update(message)[outputType]();\n                };\n            };\n            var createMethod = function(is2242) {\n                var method2 = createOutputMethod(\"hex\", is2242);\n                if (NODE_JS) {\n                    method2 = nodeWrap(method2, is2242);\n                }\n                method2.create = function() {\n                    return new Sha256(is2242);\n                };\n                method2.update = function(message) {\n                    return method2.create().update(message);\n                };\n                for(var i3 = 0; i3 < OUTPUT_TYPES.length; ++i3){\n                    var type = OUTPUT_TYPES[i3];\n                    method2[type] = createOutputMethod(type, is2242);\n                }\n                return method2;\n            };\n            var nodeWrap = function(method, is224) {\n                var crypto = eval(\"require('crypto')\");\n                var Buffer = eval(\"require('buffer').Buffer\");\n                var algorithm = is224 ? \"sha224\" : \"sha256\";\n                var nodeMethod = function(message) {\n                    if (typeof message === \"string\") {\n                        return crypto.createHash(algorithm).update(message, \"utf8\").digest(\"hex\");\n                    } else {\n                        if (message === null || message === void 0) {\n                            throw new Error(ERROR);\n                        } else if (message.constructor === ArrayBuffer) {\n                            message = new Uint8Array(message);\n                        }\n                    }\n                    if (Array.isArray(message) || ArrayBuffer.isView(message) || message.constructor === Buffer) {\n                        return crypto.createHash(algorithm).update(new Buffer(message)).digest(\"hex\");\n                    } else {\n                        return method(message);\n                    }\n                };\n                return nodeMethod;\n            };\n            var createHmacOutputMethod = function(outputType, is2242) {\n                return function(key, message) {\n                    return new HmacSha256(key, is2242, true).update(message)[outputType]();\n                };\n            };\n            var createHmacMethod = function(is2242) {\n                var method2 = createHmacOutputMethod(\"hex\", is2242);\n                method2.create = function(key) {\n                    return new HmacSha256(key, is2242);\n                };\n                method2.update = function(key, message) {\n                    return method2.create(key).update(message);\n                };\n                for(var i4 = 0; i4 < OUTPUT_TYPES.length; ++i4){\n                    var type = OUTPUT_TYPES[i4];\n                    method2[type] = createHmacOutputMethod(type, is2242);\n                }\n                return method2;\n            };\n            function Sha256(is2242, sharedMemory) {\n                if (sharedMemory) {\n                    blocks[0] = blocks[16] = blocks[1] = blocks[2] = blocks[3] = blocks[4] = blocks[5] = blocks[6] = blocks[7] = blocks[8] = blocks[9] = blocks[10] = blocks[11] = blocks[12] = blocks[13] = blocks[14] = blocks[15] = 0;\n                    this.blocks = blocks;\n                } else {\n                    this.blocks = [\n                        0,\n                        0,\n                        0,\n                        0,\n                        0,\n                        0,\n                        0,\n                        0,\n                        0,\n                        0,\n                        0,\n                        0,\n                        0,\n                        0,\n                        0,\n                        0,\n                        0\n                    ];\n                }\n                if (is2242) {\n                    this.h0 = 3238371032;\n                    this.h1 = 914150663;\n                    this.h2 = 812702999;\n                    this.h3 = 4144912697;\n                    this.h4 = 4290775857;\n                    this.h5 = 1750603025;\n                    this.h6 = 1694076839;\n                    this.h7 = 3204075428;\n                } else {\n                    this.h0 = 1779033703;\n                    this.h1 = 3144134277;\n                    this.h2 = 1013904242;\n                    this.h3 = 2773480762;\n                    this.h4 = 1359893119;\n                    this.h5 = 2600822924;\n                    this.h6 = 528734635;\n                    this.h7 = 1541459225;\n                }\n                this.block = this.start = this.bytes = this.hBytes = 0;\n                this.finalized = this.hashed = false;\n                this.first = true;\n                this.is224 = is2242;\n            }\n            Sha256.prototype.update = function(message) {\n                if (this.finalized) {\n                    return;\n                }\n                var notString, type = typeof message;\n                if (type !== \"string\") {\n                    if (type === \"object\") {\n                        if (message === null) {\n                            throw new Error(ERROR);\n                        } else if (ARRAY_BUFFER && message.constructor === ArrayBuffer) {\n                            message = new Uint8Array(message);\n                        } else if (!Array.isArray(message)) {\n                            if (!ARRAY_BUFFER || !ArrayBuffer.isView(message)) {\n                                throw new Error(ERROR);\n                            }\n                        }\n                    } else {\n                        throw new Error(ERROR);\n                    }\n                    notString = true;\n                }\n                var code, index = 0, i5, length = message.length, blocks2 = this.blocks;\n                while(index < length){\n                    if (this.hashed) {\n                        this.hashed = false;\n                        blocks2[0] = this.block;\n                        blocks2[16] = blocks2[1] = blocks2[2] = blocks2[3] = blocks2[4] = blocks2[5] = blocks2[6] = blocks2[7] = blocks2[8] = blocks2[9] = blocks2[10] = blocks2[11] = blocks2[12] = blocks2[13] = blocks2[14] = blocks2[15] = 0;\n                    }\n                    if (notString) {\n                        for(i5 = this.start; index < length && i5 < 64; ++index){\n                            blocks2[i5 >> 2] |= message[index] << SHIFT[(i5++) & 3];\n                        }\n                    } else {\n                        for(i5 = this.start; index < length && i5 < 64; ++index){\n                            code = message.charCodeAt(index);\n                            if (code < 128) {\n                                blocks2[i5 >> 2] |= code << SHIFT[(i5++) & 3];\n                            } else if (code < 2048) {\n                                blocks2[i5 >> 2] |= (192 | code >> 6) << SHIFT[(i5++) & 3];\n                                blocks2[i5 >> 2] |= (128 | code & 63) << SHIFT[(i5++) & 3];\n                            } else if (code < 55296 || code >= 57344) {\n                                blocks2[i5 >> 2] |= (224 | code >> 12) << SHIFT[(i5++) & 3];\n                                blocks2[i5 >> 2] |= (128 | code >> 6 & 63) << SHIFT[(i5++) & 3];\n                                blocks2[i5 >> 2] |= (128 | code & 63) << SHIFT[(i5++) & 3];\n                            } else {\n                                code = 65536 + ((code & 1023) << 10 | message.charCodeAt(++index) & 1023);\n                                blocks2[i5 >> 2] |= (240 | code >> 18) << SHIFT[(i5++) & 3];\n                                blocks2[i5 >> 2] |= (128 | code >> 12 & 63) << SHIFT[(i5++) & 3];\n                                blocks2[i5 >> 2] |= (128 | code >> 6 & 63) << SHIFT[(i5++) & 3];\n                                blocks2[i5 >> 2] |= (128 | code & 63) << SHIFT[(i5++) & 3];\n                            }\n                        }\n                    }\n                    this.lastByteIndex = i5;\n                    this.bytes += i5 - this.start;\n                    if (i5 >= 64) {\n                        this.block = blocks2[16];\n                        this.start = i5 - 64;\n                        this.hash();\n                        this.hashed = true;\n                    } else {\n                        this.start = i5;\n                    }\n                }\n                if (this.bytes > 4294967295) {\n                    this.hBytes += this.bytes / 4294967296 << 0;\n                    this.bytes = this.bytes % 4294967296;\n                }\n                return this;\n            };\n            Sha256.prototype.finalize = function() {\n                if (this.finalized) {\n                    return;\n                }\n                this.finalized = true;\n                var blocks2 = this.blocks, i6 = this.lastByteIndex;\n                blocks2[16] = this.block;\n                blocks2[i6 >> 2] |= EXTRA[i6 & 3];\n                this.block = blocks2[16];\n                if (i6 >= 56) {\n                    if (!this.hashed) {\n                        this.hash();\n                    }\n                    blocks2[0] = this.block;\n                    blocks2[16] = blocks2[1] = blocks2[2] = blocks2[3] = blocks2[4] = blocks2[5] = blocks2[6] = blocks2[7] = blocks2[8] = blocks2[9] = blocks2[10] = blocks2[11] = blocks2[12] = blocks2[13] = blocks2[14] = blocks2[15] = 0;\n                }\n                blocks2[14] = this.hBytes << 3 | this.bytes >>> 29;\n                blocks2[15] = this.bytes << 3;\n                this.hash();\n            };\n            Sha256.prototype.hash = function() {\n                var a = this.h0, b = this.h1, c = this.h2, d = this.h3, e = this.h4, f = this.h5, g = this.h6, h = this.h7, blocks2 = this.blocks, j, s0, s1, maj, t1, t2, ch, ab, da, cd, bc;\n                for(j = 16; j < 64; ++j){\n                    t1 = blocks2[j - 15];\n                    s0 = (t1 >>> 7 | t1 << 25) ^ (t1 >>> 18 | t1 << 14) ^ t1 >>> 3;\n                    t1 = blocks2[j - 2];\n                    s1 = (t1 >>> 17 | t1 << 15) ^ (t1 >>> 19 | t1 << 13) ^ t1 >>> 10;\n                    blocks2[j] = blocks2[j - 16] + s0 + blocks2[j - 7] + s1 << 0;\n                }\n                bc = b & c;\n                for(j = 0; j < 64; j += 4){\n                    if (this.first) {\n                        if (this.is224) {\n                            ab = 300032;\n                            t1 = blocks2[0] - 1413257819;\n                            h = t1 - 150054599 << 0;\n                            d = t1 + 24177077 << 0;\n                        } else {\n                            ab = 704751109;\n                            t1 = blocks2[0] - 210244248;\n                            h = t1 - 1521486534 << 0;\n                            d = t1 + 143694565 << 0;\n                        }\n                        this.first = false;\n                    } else {\n                        s0 = (a >>> 2 | a << 30) ^ (a >>> 13 | a << 19) ^ (a >>> 22 | a << 10);\n                        s1 = (e >>> 6 | e << 26) ^ (e >>> 11 | e << 21) ^ (e >>> 25 | e << 7);\n                        ab = a & b;\n                        maj = ab ^ a & c ^ bc;\n                        ch = e & f ^ ~e & g;\n                        t1 = h + s1 + ch + K[j] + blocks2[j];\n                        t2 = s0 + maj;\n                        h = d + t1 << 0;\n                        d = t1 + t2 << 0;\n                    }\n                    s0 = (d >>> 2 | d << 30) ^ (d >>> 13 | d << 19) ^ (d >>> 22 | d << 10);\n                    s1 = (h >>> 6 | h << 26) ^ (h >>> 11 | h << 21) ^ (h >>> 25 | h << 7);\n                    da = d & a;\n                    maj = da ^ d & b ^ ab;\n                    ch = h & e ^ ~h & f;\n                    t1 = g + s1 + ch + K[j + 1] + blocks2[j + 1];\n                    t2 = s0 + maj;\n                    g = c + t1 << 0;\n                    c = t1 + t2 << 0;\n                    s0 = (c >>> 2 | c << 30) ^ (c >>> 13 | c << 19) ^ (c >>> 22 | c << 10);\n                    s1 = (g >>> 6 | g << 26) ^ (g >>> 11 | g << 21) ^ (g >>> 25 | g << 7);\n                    cd = c & d;\n                    maj = cd ^ c & a ^ da;\n                    ch = g & h ^ ~g & e;\n                    t1 = f + s1 + ch + K[j + 2] + blocks2[j + 2];\n                    t2 = s0 + maj;\n                    f = b + t1 << 0;\n                    b = t1 + t2 << 0;\n                    s0 = (b >>> 2 | b << 30) ^ (b >>> 13 | b << 19) ^ (b >>> 22 | b << 10);\n                    s1 = (f >>> 6 | f << 26) ^ (f >>> 11 | f << 21) ^ (f >>> 25 | f << 7);\n                    bc = b & c;\n                    maj = bc ^ b & d ^ cd;\n                    ch = f & g ^ ~f & h;\n                    t1 = e + s1 + ch + K[j + 3] + blocks2[j + 3];\n                    t2 = s0 + maj;\n                    e = a + t1 << 0;\n                    a = t1 + t2 << 0;\n                }\n                this.h0 = this.h0 + a << 0;\n                this.h1 = this.h1 + b << 0;\n                this.h2 = this.h2 + c << 0;\n                this.h3 = this.h3 + d << 0;\n                this.h4 = this.h4 + e << 0;\n                this.h5 = this.h5 + f << 0;\n                this.h6 = this.h6 + g << 0;\n                this.h7 = this.h7 + h << 0;\n            };\n            Sha256.prototype.hex = function() {\n                this.finalize();\n                var h0 = this.h0, h1 = this.h1, h2 = this.h2, h3 = this.h3, h4 = this.h4, h5 = this.h5, h6 = this.h6, h7 = this.h7;\n                var hex = HEX_CHARS[h0 >> 28 & 15] + HEX_CHARS[h0 >> 24 & 15] + HEX_CHARS[h0 >> 20 & 15] + HEX_CHARS[h0 >> 16 & 15] + HEX_CHARS[h0 >> 12 & 15] + HEX_CHARS[h0 >> 8 & 15] + HEX_CHARS[h0 >> 4 & 15] + HEX_CHARS[h0 & 15] + HEX_CHARS[h1 >> 28 & 15] + HEX_CHARS[h1 >> 24 & 15] + HEX_CHARS[h1 >> 20 & 15] + HEX_CHARS[h1 >> 16 & 15] + HEX_CHARS[h1 >> 12 & 15] + HEX_CHARS[h1 >> 8 & 15] + HEX_CHARS[h1 >> 4 & 15] + HEX_CHARS[h1 & 15] + HEX_CHARS[h2 >> 28 & 15] + HEX_CHARS[h2 >> 24 & 15] + HEX_CHARS[h2 >> 20 & 15] + HEX_CHARS[h2 >> 16 & 15] + HEX_CHARS[h2 >> 12 & 15] + HEX_CHARS[h2 >> 8 & 15] + HEX_CHARS[h2 >> 4 & 15] + HEX_CHARS[h2 & 15] + HEX_CHARS[h3 >> 28 & 15] + HEX_CHARS[h3 >> 24 & 15] + HEX_CHARS[h3 >> 20 & 15] + HEX_CHARS[h3 >> 16 & 15] + HEX_CHARS[h3 >> 12 & 15] + HEX_CHARS[h3 >> 8 & 15] + HEX_CHARS[h3 >> 4 & 15] + HEX_CHARS[h3 & 15] + HEX_CHARS[h4 >> 28 & 15] + HEX_CHARS[h4 >> 24 & 15] + HEX_CHARS[h4 >> 20 & 15] + HEX_CHARS[h4 >> 16 & 15] + HEX_CHARS[h4 >> 12 & 15] + HEX_CHARS[h4 >> 8 & 15] + HEX_CHARS[h4 >> 4 & 15] + HEX_CHARS[h4 & 15] + HEX_CHARS[h5 >> 28 & 15] + HEX_CHARS[h5 >> 24 & 15] + HEX_CHARS[h5 >> 20 & 15] + HEX_CHARS[h5 >> 16 & 15] + HEX_CHARS[h5 >> 12 & 15] + HEX_CHARS[h5 >> 8 & 15] + HEX_CHARS[h5 >> 4 & 15] + HEX_CHARS[h5 & 15] + HEX_CHARS[h6 >> 28 & 15] + HEX_CHARS[h6 >> 24 & 15] + HEX_CHARS[h6 >> 20 & 15] + HEX_CHARS[h6 >> 16 & 15] + HEX_CHARS[h6 >> 12 & 15] + HEX_CHARS[h6 >> 8 & 15] + HEX_CHARS[h6 >> 4 & 15] + HEX_CHARS[h6 & 15];\n                if (!this.is224) {\n                    hex += HEX_CHARS[h7 >> 28 & 15] + HEX_CHARS[h7 >> 24 & 15] + HEX_CHARS[h7 >> 20 & 15] + HEX_CHARS[h7 >> 16 & 15] + HEX_CHARS[h7 >> 12 & 15] + HEX_CHARS[h7 >> 8 & 15] + HEX_CHARS[h7 >> 4 & 15] + HEX_CHARS[h7 & 15];\n                }\n                return hex;\n            };\n            Sha256.prototype.toString = Sha256.prototype.hex;\n            Sha256.prototype.digest = function() {\n                this.finalize();\n                var h0 = this.h0, h1 = this.h1, h2 = this.h2, h3 = this.h3, h4 = this.h4, h5 = this.h5, h6 = this.h6, h7 = this.h7;\n                var arr = [\n                    h0 >> 24 & 255,\n                    h0 >> 16 & 255,\n                    h0 >> 8 & 255,\n                    h0 & 255,\n                    h1 >> 24 & 255,\n                    h1 >> 16 & 255,\n                    h1 >> 8 & 255,\n                    h1 & 255,\n                    h2 >> 24 & 255,\n                    h2 >> 16 & 255,\n                    h2 >> 8 & 255,\n                    h2 & 255,\n                    h3 >> 24 & 255,\n                    h3 >> 16 & 255,\n                    h3 >> 8 & 255,\n                    h3 & 255,\n                    h4 >> 24 & 255,\n                    h4 >> 16 & 255,\n                    h4 >> 8 & 255,\n                    h4 & 255,\n                    h5 >> 24 & 255,\n                    h5 >> 16 & 255,\n                    h5 >> 8 & 255,\n                    h5 & 255,\n                    h6 >> 24 & 255,\n                    h6 >> 16 & 255,\n                    h6 >> 8 & 255,\n                    h6 & 255\n                ];\n                if (!this.is224) {\n                    arr.push(h7 >> 24 & 255, h7 >> 16 & 255, h7 >> 8 & 255, h7 & 255);\n                }\n                return arr;\n            };\n            Sha256.prototype.array = Sha256.prototype.digest;\n            Sha256.prototype.arrayBuffer = function() {\n                this.finalize();\n                var buffer = new ArrayBuffer(this.is224 ? 28 : 32);\n                var dataView = new DataView(buffer);\n                dataView.setUint32(0, this.h0);\n                dataView.setUint32(4, this.h1);\n                dataView.setUint32(8, this.h2);\n                dataView.setUint32(12, this.h3);\n                dataView.setUint32(16, this.h4);\n                dataView.setUint32(20, this.h5);\n                dataView.setUint32(24, this.h6);\n                if (!this.is224) {\n                    dataView.setUint32(28, this.h7);\n                }\n                return buffer;\n            };\n            function HmacSha256(key, is2242, sharedMemory) {\n                var i7, type = typeof key;\n                if (type === \"string\") {\n                    var bytes = [], length = key.length, index = 0, code;\n                    for(i7 = 0; i7 < length; ++i7){\n                        code = key.charCodeAt(i7);\n                        if (code < 128) {\n                            bytes[index++] = code;\n                        } else if (code < 2048) {\n                            bytes[index++] = 192 | code >> 6;\n                            bytes[index++] = 128 | code & 63;\n                        } else if (code < 55296 || code >= 57344) {\n                            bytes[index++] = 224 | code >> 12;\n                            bytes[index++] = 128 | code >> 6 & 63;\n                            bytes[index++] = 128 | code & 63;\n                        } else {\n                            code = 65536 + ((code & 1023) << 10 | key.charCodeAt(++i7) & 1023);\n                            bytes[index++] = 240 | code >> 18;\n                            bytes[index++] = 128 | code >> 12 & 63;\n                            bytes[index++] = 128 | code >> 6 & 63;\n                            bytes[index++] = 128 | code & 63;\n                        }\n                    }\n                    key = bytes;\n                } else {\n                    if (type === \"object\") {\n                        if (key === null) {\n                            throw new Error(ERROR);\n                        } else if (ARRAY_BUFFER && key.constructor === ArrayBuffer) {\n                            key = new Uint8Array(key);\n                        } else if (!Array.isArray(key)) {\n                            if (!ARRAY_BUFFER || !ArrayBuffer.isView(key)) {\n                                throw new Error(ERROR);\n                            }\n                        }\n                    } else {\n                        throw new Error(ERROR);\n                    }\n                }\n                if (key.length > 64) {\n                    key = new Sha256(is2242, true).update(key).array();\n                }\n                var oKeyPad = [], iKeyPad = [];\n                for(i7 = 0; i7 < 64; ++i7){\n                    var b = key[i7] || 0;\n                    oKeyPad[i7] = 92 ^ b;\n                    iKeyPad[i7] = 54 ^ b;\n                }\n                Sha256.call(this, is2242, sharedMemory);\n                this.update(iKeyPad);\n                this.oKeyPad = oKeyPad;\n                this.inner = true;\n                this.sharedMemory = sharedMemory;\n            }\n            HmacSha256.prototype = new Sha256();\n            HmacSha256.prototype.finalize = function() {\n                Sha256.prototype.finalize.call(this);\n                if (this.inner) {\n                    this.inner = false;\n                    var innerHash = this.array();\n                    Sha256.call(this, this.is224, this.sharedMemory);\n                    this.update(this.oKeyPad);\n                    this.update(innerHash);\n                    Sha256.prototype.finalize.call(this);\n                }\n            };\n            var exports = createMethod();\n            exports.sha256 = exports;\n            exports.sha224 = createMethod(true);\n            exports.sha256.hmac = createHmacMethod();\n            exports.sha224.hmac = createHmacMethod(true);\n            if (COMMON_JS) {\n                module.exports = exports;\n            } else {\n                root.sha256 = exports.sha256;\n                root.sha224 = exports.sha224;\n                if (AMD) {\n                    define(function() {\n                        return exports;\n                    });\n                }\n            }\n        })();\n    }\n});\n// node_modules/@dfinity/principal/lib/esm/utils/base32.js\nvar alphabet = \"abcdefghijklmnopqrstuvwxyz234567\";\nvar lookupTable = /* @__PURE__ */ Object.create(null);\nfor(let i = 0; i < alphabet.length; i++){\n    lookupTable[alphabet[i]] = i;\n}\nlookupTable[\"0\"] = lookupTable.o;\nlookupTable[\"1\"] = lookupTable.i;\nfunction encode(input) {\n    let skip = 0;\n    let bits = 0;\n    let output = \"\";\n    function encodeByte(byte) {\n        if (skip < 0) {\n            bits |= byte >> -skip;\n        } else {\n            bits = byte << skip & 248;\n        }\n        if (skip > 3) {\n            skip -= 8;\n            return 1;\n        }\n        if (skip < 4) {\n            output += alphabet[bits >> 3];\n            skip += 5;\n        }\n        return 0;\n    }\n    for(let i8 = 0; i8 < input.length;){\n        i8 += encodeByte(input[i8]);\n    }\n    return output + (skip < 0 ? alphabet[bits >> 3] : \"\");\n}\nfunction decode(input) {\n    let skip = 0;\n    let byte = 0;\n    const output = new Uint8Array(input.length * 4 / 3 | 0);\n    let o = 0;\n    function decodeChar(char) {\n        let val = lookupTable[char.toLowerCase()];\n        if (val === void 0) {\n            throw new Error(`Invalid character: ${JSON.stringify(char)}`);\n        }\n        val <<= 3;\n        byte |= val >>> skip;\n        skip += 5;\n        if (skip >= 8) {\n            output[o++] = byte;\n            skip -= 8;\n            if (skip > 0) {\n                byte = val << 5 - skip & 255;\n            } else {\n                byte = 0;\n            }\n        }\n    }\n    for (const c of input){\n        decodeChar(c);\n    }\n    return output.slice(0, o);\n}\n// node_modules/@dfinity/principal/lib/esm/utils/getCrc.js\nvar lookUpTable = new Uint32Array([\n    0,\n    1996959894,\n    3993919788,\n    2567524794,\n    124634137,\n    1886057615,\n    3915621685,\n    2657392035,\n    249268274,\n    2044508324,\n    3772115230,\n    2547177864,\n    162941995,\n    2125561021,\n    3887607047,\n    2428444049,\n    498536548,\n    1789927666,\n    4089016648,\n    2227061214,\n    450548861,\n    1843258603,\n    4107580753,\n    2211677639,\n    325883990,\n    1684777152,\n    4251122042,\n    2321926636,\n    335633487,\n    1661365465,\n    4195302755,\n    2366115317,\n    997073096,\n    1281953886,\n    3579855332,\n    2724688242,\n    1006888145,\n    1258607687,\n    3524101629,\n    2768942443,\n    901097722,\n    1119000684,\n    3686517206,\n    2898065728,\n    853044451,\n    1172266101,\n    3705015759,\n    2882616665,\n    651767980,\n    1373503546,\n    3369554304,\n    3218104598,\n    565507253,\n    1454621731,\n    3485111705,\n    3099436303,\n    671266974,\n    1594198024,\n    3322730930,\n    2970347812,\n    795835527,\n    1483230225,\n    3244367275,\n    3060149565,\n    1994146192,\n    31158534,\n    2563907772,\n    4023717930,\n    1907459465,\n    112637215,\n    2680153253,\n    3904427059,\n    2013776290,\n    251722036,\n    2517215374,\n    3775830040,\n    2137656763,\n    141376813,\n    2439277719,\n    3865271297,\n    1802195444,\n    476864866,\n    2238001368,\n    4066508878,\n    1812370925,\n    453092731,\n    2181625025,\n    4111451223,\n    1706088902,\n    314042704,\n    2344532202,\n    4240017532,\n    1658658271,\n    366619977,\n    2362670323,\n    4224994405,\n    1303535960,\n    984961486,\n    2747007092,\n    3569037538,\n    1256170817,\n    1037604311,\n    2765210733,\n    3554079995,\n    1131014506,\n    879679996,\n    2909243462,\n    3663771856,\n    1141124467,\n    855842277,\n    2852801631,\n    3708648649,\n    1342533948,\n    654459306,\n    3188396048,\n    3373015174,\n    1466479909,\n    544179635,\n    3110523913,\n    3462522015,\n    1591671054,\n    702138776,\n    2966460450,\n    3352799412,\n    1504918807,\n    783551873,\n    3082640443,\n    3233442989,\n    3988292384,\n    2596254646,\n    62317068,\n    1957810842,\n    3939845945,\n    2647816111,\n    81470997,\n    1943803523,\n    3814918930,\n    2489596804,\n    225274430,\n    2053790376,\n    3826175755,\n    2466906013,\n    167816743,\n    2097651377,\n    4027552580,\n    2265490386,\n    503444072,\n    1762050814,\n    4150417245,\n    2154129355,\n    426522225,\n    1852507879,\n    4275313526,\n    2312317920,\n    282753626,\n    1742555852,\n    4189708143,\n    2394877945,\n    397917763,\n    1622183637,\n    3604390888,\n    2714866558,\n    953729732,\n    1340076626,\n    3518719985,\n    2797360999,\n    1068828381,\n    1219638859,\n    3624741850,\n    2936675148,\n    906185462,\n    1090812512,\n    3747672003,\n    2825379669,\n    829329135,\n    1181335161,\n    3412177804,\n    3160834842,\n    628085408,\n    1382605366,\n    3423369109,\n    3138078467,\n    570562233,\n    1426400815,\n    3317316542,\n    2998733608,\n    733239954,\n    1555261956,\n    3268935591,\n    3050360625,\n    752459403,\n    1541320221,\n    2607071920,\n    3965973030,\n    1969922972,\n    40735498,\n    2617837225,\n    3943577151,\n    1913087877,\n    83908371,\n    2512341634,\n    3803740692,\n    2075208622,\n    213261112,\n    2463272603,\n    3855990285,\n    2094854071,\n    198958881,\n    2262029012,\n    4057260610,\n    1759359992,\n    534414190,\n    2176718541,\n    4139329115,\n    1873836001,\n    414664567,\n    2282248934,\n    4279200368,\n    1711684554,\n    285281116,\n    2405801727,\n    4167216745,\n    1634467795,\n    376229701,\n    2685067896,\n    3608007406,\n    1308918612,\n    956543938,\n    2808555105,\n    3495958263,\n    1231636301,\n    1047427035,\n    2932959818,\n    3654703836,\n    1088359270,\n    936918000,\n    2847714899,\n    3736837829,\n    1202900863,\n    817233897,\n    3183342108,\n    3401237130,\n    1404277552,\n    615818150,\n    3134207493,\n    3453421203,\n    1423857449,\n    601450431,\n    3009837614,\n    3294710456,\n    1567103746,\n    711928724,\n    3020668471,\n    3272380065,\n    1510334235,\n    755167117\n]);\nfunction getCrc32(buf) {\n    const b = new Uint8Array(buf);\n    let crc = -1;\n    for(let i9 = 0; i9 < b.length; i9++){\n        const byte = b[i9];\n        const t = (byte ^ crc) & 255;\n        crc = lookUpTable[t] ^ crc >>> 8;\n    }\n    return (crc ^ -1) >>> 0;\n}\n// node_modules/@dfinity/principal/lib/esm/utils/sha224.js\nvar import_js_sha256 = __toESM(require_sha256());\nfunction sha224(data) {\n    const shaObj = import_js_sha256.sha224.create();\n    shaObj.update(data);\n    return new Uint8Array(shaObj.array());\n}\n// node_modules/@dfinity/principal/lib/esm/index.js\nvar SELF_AUTHENTICATING_SUFFIX = 2;\nvar ANONYMOUS_SUFFIX = 4;\nvar fromHexString = (hexString)=>{\n    var _a;\n    return new Uint8Array(((_a = hexString.match(/.{1,2}/g)) !== null && _a !== void 0 ? _a : []).map((byte)=>parseInt(byte, 16)\n    ));\n};\nvar toHexString = (bytes)=>bytes.reduce((str, byte)=>str + byte.toString(16).padStart(2, \"0\")\n    , \"\")\n;\nvar Principal = class {\n    static anonymous() {\n        return new this(new Uint8Array([\n            ANONYMOUS_SUFFIX\n        ]));\n    }\n    static selfAuthenticating(publicKey) {\n        const sha = sha224(publicKey);\n        return new this(new Uint8Array([\n            ...sha,\n            SELF_AUTHENTICATING_SUFFIX\n        ]));\n    }\n    static from(other) {\n        if (typeof other === \"string\") {\n            return Principal.fromText(other);\n        } else if (typeof other === \"object\" && other !== null && other._isPrincipal === true) {\n            return new Principal(other._arr);\n        }\n        throw new Error(`Impossible to convert ${JSON.stringify(other)} to Principal.`);\n    }\n    static fromHex(hex) {\n        return new this(fromHexString(hex));\n    }\n    static fromText(text2) {\n        const canisterIdNoDash = text2.toLowerCase().replace(/-/g, \"\");\n        let arr = decode(canisterIdNoDash);\n        arr = arr.slice(4, arr.length);\n        const principal = new this(arr);\n        if (principal.toText() !== text2) {\n            throw new Error(`Principal \"${principal.toText()}\" does not have a valid checksum (original value \"${text2}\" may not be a valid Principal ID).`);\n        }\n        return principal;\n    }\n    static fromUint8Array(arr) {\n        return new this(arr);\n    }\n    isAnonymous() {\n        return this._arr.byteLength === 1 && this._arr[0] === ANONYMOUS_SUFFIX;\n    }\n    toUint8Array() {\n        return this._arr;\n    }\n    toHex() {\n        return toHexString(this._arr).toUpperCase();\n    }\n    toText() {\n        const checksumArrayBuf = new ArrayBuffer(4);\n        const view = new DataView(checksumArrayBuf);\n        view.setUint32(0, getCrc32(this._arr));\n        const checksum = new Uint8Array(checksumArrayBuf);\n        const bytes = Uint8Array.from(this._arr);\n        const array = new Uint8Array([\n            ...checksum,\n            ...bytes\n        ]);\n        const result = encode(array);\n        const matches = result.match(/.{1,5}/g);\n        if (!matches) {\n            throw new Error();\n        }\n        return matches.join(\"-\");\n    }\n    toString() {\n        return this.toText();\n    }\n    constructor(_arr){\n        this._arr = _arr;\n        this._isPrincipal = true;\n    }\n};\nexports.Principal = Principal;\nvar _ic;\n// node_modules/azle/src/lib/ic.ts\nvar ic = (_ic = globalThis.ic) !== null && _ic !== void 0 ? _ic : {};\n// node_modules/azle/src/lib/candid_types/variant.ts\nfunction match(variant, matcher) {\n    for(const key in variant){\n        if (key in matcher) {\n            return matcher[key](variant[key]);\n        }\n    }\n    return matcher._();\n}\n// node_modules/azle/src/lib/candid_types/index.ts\nvar Opt = {\n    Some: (value)=>({\n            Some: value\n        })\n    ,\n    None: Object.freeze({\n        None: null\n    })\n};\n// node_modules/azle/src/lib/results.ts\nvar Result = {\n    Ok: (value)=>({\n            Ok: value\n        })\n    ,\n    Err: (value)=>({\n            Err: value\n        })\n};\n// node_modules/azle/src/lib/stable_b_tree_map.ts\nvar StableBTreeMap = class {\n    containsKey(key) {\n        if (arguments.length === 0) {\n            throw new Error(\"An argument for 'key' was not provided\");\n        }\n        return ic.stableBTreeMapContainsKey(this.memoryId, key);\n    }\n    get(key) {\n        if (arguments.length === 0) {\n            throw new Error(\"An argument for 'key' was not provided\");\n        }\n        return ic.stableBTreeMapGet(this.memoryId, key);\n    }\n    insert(key, value) {\n        if (arguments.length === 0) {\n            throw new Error(\"An argument for 'key' was not provided\");\n        }\n        if (arguments.length === 1) {\n            throw new Error(\"An argument for 'value' was not provided\");\n        }\n        return ic.stableBTreeMapInsert(this.memoryId, key, value);\n    }\n    isEmpty() {\n        return ic.stableBTreeMapIsEmpty(this.memoryId);\n    }\n    items() {\n        return ic.stableBTreeMapItems(this.memoryId);\n    }\n    keys() {\n        return ic.stableBTreeMapKeys(this.memoryId);\n    }\n    len() {\n        return ic.stableBTreeMapLen(this.memoryId);\n    }\n    remove(key) {\n        if (arguments.length === 0) {\n            throw new Error(\"An argument for 'key' was not provided\");\n        }\n        return ic.stableBTreeMapRemove(this.memoryId, key);\n    }\n    values() {\n        return ic.stableBTreeMapValues(this.memoryId);\n    }\n    constructor(memoryId, maxKeySize, maxValueSize){\n        this.memoryId = memoryId;\n    }\n};\n// node_modules/uuid/dist/esm-browser/rng.js\nvar getRandomValues;\nvar rnds8 = new Uint8Array(16);\nfunction rng() {\n    if (!getRandomValues) {\n        getRandomValues = typeof crypto !== \"undefined\" && crypto.getRandomValues && crypto.getRandomValues.bind(crypto);\n        if (!getRandomValues) {\n            throw new Error(\"crypto.getRandomValues() not supported. See https://github.com/uuidjs/uuid#getrandomvalues-not-supported\");\n        }\n    }\n    return getRandomValues(rnds8);\n}\n// node_modules/uuid/dist/esm-browser/stringify.js\nvar byteToHex = [];\nfor(let i1 = 0; i1 < 256; ++i1){\n    byteToHex.push((i1 + 256).toString(16).slice(1));\n}\nfunction unsafeStringify(arr, offset = 0) {\n    return byteToHex[arr[offset + 0]] + byteToHex[arr[offset + 1]] + byteToHex[arr[offset + 2]] + byteToHex[arr[offset + 3]] + \"-\" + byteToHex[arr[offset + 4]] + byteToHex[arr[offset + 5]] + \"-\" + byteToHex[arr[offset + 6]] + byteToHex[arr[offset + 7]] + \"-\" + byteToHex[arr[offset + 8]] + byteToHex[arr[offset + 9]] + \"-\" + byteToHex[arr[offset + 10]] + byteToHex[arr[offset + 11]] + byteToHex[arr[offset + 12]] + byteToHex[arr[offset + 13]] + byteToHex[arr[offset + 14]] + byteToHex[arr[offset + 15]];\n}\n// node_modules/uuid/dist/esm-browser/native.js\nvar randomUUID = typeof crypto !== \"undefined\" && crypto.randomUUID && crypto.randomUUID.bind(crypto);\nvar native_default = {\n    randomUUID\n};\n// node_modules/uuid/dist/esm-browser/v4.js\nfunction v4(options, buf, offset) {\n    if (native_default.randomUUID && !buf && !options) {\n        return native_default.randomUUID();\n    }\n    options = options || {};\n    const rnds = options.random || (options.rng || rng)();\n    rnds[6] = rnds[6] & 15 | 64;\n    rnds[8] = rnds[8] & 63 | 128;\n    if (buf) {\n        offset = offset || 0;\n        for(let i10 = 0; i10 < 16; ++i10){\n            buf[offset + i10] = rnds[i10];\n        }\n        return buf;\n    }\n    return unsafeStringify(rnds);\n}\nvar v4_default = v4;\n// src/index.ts\nvar deviceStorage = new StableBTreeMap(0, 44, 1024);\nfunction searchDevices(query) {\n    try {\n        const lowerCaseQuery = query.toLowerCase();\n        const filteredDevices = deviceStorage.values().filter((device)=>device.brand.toLowerCase().includes(lowerCaseQuery) || device.type.toLowerCase().includes(lowerCaseQuery)\n        );\n        return Result.Ok(filteredDevices);\n    } catch (error) {\n        return Result.Err(`Error searching for a device: ${error}`);\n    }\n}\nexports.searchDevices = searchDevices;\nfunction getDevices() {\n    try {\n        const devices = deviceStorage.values();\n        return Result.Ok(devices);\n    } catch (error) {\n        return Result.Err(`Error getting devices: ${error}`);\n    }\n}\nexports.getDevices = getDevices;\nfunction getDevice(id) {\n    return match(deviceStorage.get(id), {\n        Some: (device)=>Result.Ok(device)\n        ,\n        None: ()=>Result.Err(`Device with id=${id} not found`)\n    });\n}\nexports.getDevice = getDevice;\nfunction getDevicesByType(deviceType) {\n    try {\n        const devicesByType = deviceStorage.values().filter((device)=>device.type.toLowerCase() === deviceType.toLowerCase()\n        );\n        return Result.Ok(devicesByType);\n    } catch (error) {\n        return Result.Err(`Error getting devices by type: ${error}`);\n    }\n}\nexports.getDevicesByType = getDevicesByType;\nfunction getActiveDevices() {\n    try {\n        const activeDevices = deviceStorage.values().filter((device)=>device.isOn\n        );\n        return Result.Ok(activeDevices);\n    } catch (error) {\n        return Result.Err(`Error getting active devices: ${error}`);\n    }\n}\nexports.getActiveDevices = getActiveDevices;\nfunction turnOnDevice(id) {\n    return match(deviceStorage.get(id), {\n        Some: (device)=>{\n            if (device.isOn) {\n                return Result.Err(`Device with id=${id} is already on`);\n            }\n            const newDevice = _objectSpread({}, device, {\n                isOn: true\n            });\n            deviceStorage.insert(id, newDevice);\n            return Result.Ok(newDevice);\n        },\n        None: ()=>Result.Err(`Device with id=${id} not found`)\n    });\n}\nexports.turnOnDevice = turnOnDevice;\nfunction turnOffDevice(id) {\n    return match(deviceStorage.get(id), {\n        Some: (device)=>{\n            if (!device.isOn) {\n                return Result.Err(`Device with id=${id} is already off`);\n            }\n            const newDevice = _objectSpread({}, device, {\n                isOn: false\n            });\n            deviceStorage.insert(id, newDevice);\n            return Result.Ok(newDevice);\n        },\n        None: ()=>Result.Err(`Device with id=${id} not found`)\n    });\n}\nexports.turnOffDevice = turnOffDevice;\nfunction addDevice(device) {\n    try {\n        device.id = v4_default();\n        device.isOn = false;\n        if (!device.type || !device.brand) {\n            return Result.Err(\"Missing required fields in the device object\");\n        }\n        device.updatedAt = Opt.Some(ic.time());\n        deviceStorage.insert(device.id, device);\n        return Result.Ok(device);\n    } catch (error) {\n        return Result.Err(`Error adding device: ${error}`);\n    }\n}\nexports.addDevice = addDevice;\nfunction updateDevice(id, device) {\n    return match(deviceStorage.get(id), {\n        Some: (existingDevice)=>{\n            if (!device.type || !device.brand) {\n                return Result.Err(\"Missing required fields in the device object\");\n            }\n            const updatedDevice = _objectSpread({}, existingDevice, device, {\n                updatedAt: Opt.Some(ic.time())\n            });\n            deviceStorage.insert(id, updatedDevice);\n            return Result.Ok(updatedDevice);\n        },\n        None: ()=>Result.Err(`Device with id=${id} does not exist`)\n    });\n}\nexports.updateDevice = updateDevice;\nfunction toggleDevice(id) {\n    return match(deviceStorage.get(id), {\n        Some: (device)=>{\n            const newDevice = _objectSpread({}, device, {\n                isOn: !device.isOn\n            });\n            deviceStorage.insert(id, newDevice);\n            return Result.Ok(newDevice);\n        },\n        None: ()=>Result.Err(`Device with id=${id} not found`)\n    });\n}\nexports.toggleDevice = toggleDevice;\nfunction deleteDevice(id) {\n    try {\n        if (!isValidUUID(id)) {\n            return Result.Err(\"Invalid device ID\");\n        }\n        const deletedDevice = deviceStorage.remove(id);\n        if (!deletedDevice) {\n            return Result.Err(`Device with ID ${id} does not exist`);\n        }\n        return Result.Ok(deletedDevice);\n    } catch (error) {\n        return Result.Err(`Error deleting device: ${error}`);\n    }\n}\nexports.deleteDevice = deleteDevice;\nfunction isValidUUID(id) {\n    return /^[\\da-f]{8}-([\\da-f]{4}-){3}[\\da-f]{12}$/i.test(id);\n}\nexports.isValidUUID = isValidUUID;\nglobalThis.crypto = {\n    getRandomValues: ()=>{\n        let array = new Uint8Array(32);\n        for(let i11 = 0; i11 < array.length; i11++){\n            array[i11] = Math.floor(Math.random() * 256);\n        }\n        return array;\n    }\n};\n\n        ";
+static MAIN_JS: &'static str = "\n            // TODO we should centralize/standardize where we add global variables to the JS, we are doing this in multiple places (i.e. the exports variable is not here, found in init/post_upgrade)\n            globalThis.console = {\n                ...globalThis.console,\n                log: (...args) => {\n                    ic.print(...args);\n                }\n            };\n\n            \nObject.defineProperty(exports, \"__esModule\", {\n    value: true\n});\nexports.addTaskComment = exports.getOverdueTasks = exports.getTasksByCreator = exports.sendDueDateReminder = exports.setTaskPriority = exports.getTasksByStatus = exports.changeTaskStatus = exports.assignTask = exports.deleteTask = exports.updateTask = exports.addTags = exports.addTask = exports.completedTask = exports.searchTasks = exports.getTaskByTags = exports.getTask = exports.loadMoreTasks = exports.getInitialTasks = exports.Principal = void 0;\nfunction _defineProperty(obj, key, value) {\n    if (key in obj) {\n        Object.defineProperty(obj, key, {\n            value: value,\n            enumerable: true,\n            configurable: true,\n            writable: true\n        });\n    } else {\n        obj[key] = value;\n    }\n    return obj;\n}\nfunction _objectSpread(target) {\n    for(var i2 = 1; i2 < arguments.length; i2++){\n        var source = arguments[i2] != null ? arguments[i2] : {};\n        var ownKeys = Object.keys(source);\n        if (typeof Object.getOwnPropertySymbols === \"function\") {\n            ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function(sym) {\n                return Object.getOwnPropertyDescriptor(source, sym).enumerable;\n            }));\n        }\n        ownKeys.forEach(function(key) {\n            _defineProperty(target, key, source[key]);\n        });\n    }\n    return target;\n}\nvar __create = Object.create;\nvar __defProp = Object.defineProperty;\nvar __getOwnPropDesc = Object.getOwnPropertyDescriptor;\nvar __getOwnPropNames = Object.getOwnPropertyNames;\nvar __getProtoOf = Object.getPrototypeOf;\nvar __hasOwnProp = Object.prototype.hasOwnProperty;\nvar __markAsModule = (target)=>__defProp(target, \"__esModule\", {\n        value: true\n    })\n;\nvar __commonJS = (cb, mod)=>function __require() {\n        return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = {\n            exports: {}\n        }).exports, mod), mod.exports;\n    }\n;\nvar __reExport = (target, module2, copyDefault, desc)=>{\n    if (module2 && typeof module2 === \"object\" || typeof module2 === \"function\") {\n        for (let key of __getOwnPropNames(module2))if (!__hasOwnProp.call(target, key) && (copyDefault || key !== \"default\")) __defProp(target, key, {\n            get: ()=>module2[key]\n            ,\n            enumerable: !(desc = __getOwnPropDesc(module2, key)) || desc.enumerable\n        });\n    }\n    return target;\n};\nvar __toESM = (module2, isNodeMode)=>{\n    return __reExport(__markAsModule(__defProp(module2 != null ? __create(__getProtoOf(module2)) : {}, \"default\", !isNodeMode && module2 && module2.__esModule ? {\n        get: ()=>module2.default\n        ,\n        enumerable: true\n    } : {\n        value: module2,\n        enumerable: true\n    })), module2);\n};\n// node_modules/js-sha256/src/sha256.js\nvar require_sha256 = __commonJS({\n    \"node_modules/js-sha256/src/sha256.js\" (exports1, module) {\n        (function() {\n            \n            var ERROR = \"input is invalid type\";\n            var WINDOW = typeof window === \"object\";\n            var root = WINDOW ? window : {};\n            if (root.JS_SHA256_NO_WINDOW) {\n                WINDOW = false;\n            }\n            var WEB_WORKER = !WINDOW && typeof self === \"object\";\n            var NODE_JS = !root.JS_SHA256_NO_NODE_JS && typeof process === \"object\" && process.versions && process.versions.node;\n            if (NODE_JS) {\n                root = global;\n            } else if (WEB_WORKER) {\n                root = self;\n            }\n            var COMMON_JS = !root.JS_SHA256_NO_COMMON_JS && typeof module === \"object\" && module.exports;\n            var AMD = typeof define === \"function\" && define.amd;\n            var ARRAY_BUFFER = !root.JS_SHA256_NO_ARRAY_BUFFER && typeof ArrayBuffer !== \"undefined\";\n            var HEX_CHARS = \"0123456789abcdef\".split(\"\");\n            var EXTRA = [\n                -2147483648,\n                8388608,\n                32768,\n                128\n            ];\n            var SHIFT = [\n                24,\n                16,\n                8,\n                0\n            ];\n            var K = [\n                1116352408,\n                1899447441,\n                3049323471,\n                3921009573,\n                961987163,\n                1508970993,\n                2453635748,\n                2870763221,\n                3624381080,\n                310598401,\n                607225278,\n                1426881987,\n                1925078388,\n                2162078206,\n                2614888103,\n                3248222580,\n                3835390401,\n                4022224774,\n                264347078,\n                604807628,\n                770255983,\n                1249150122,\n                1555081692,\n                1996064986,\n                2554220882,\n                2821834349,\n                2952996808,\n                3210313671,\n                3336571891,\n                3584528711,\n                113926993,\n                338241895,\n                666307205,\n                773529912,\n                1294757372,\n                1396182291,\n                1695183700,\n                1986661051,\n                2177026350,\n                2456956037,\n                2730485921,\n                2820302411,\n                3259730800,\n                3345764771,\n                3516065817,\n                3600352804,\n                4094571909,\n                275423344,\n                430227734,\n                506948616,\n                659060556,\n                883997877,\n                958139571,\n                1322822218,\n                1537002063,\n                1747873779,\n                1955562222,\n                2024104815,\n                2227730452,\n                2361852424,\n                2428436474,\n                2756734187,\n                3204031479,\n                3329325298\n            ];\n            var OUTPUT_TYPES = [\n                \"hex\",\n                \"array\",\n                \"digest\",\n                \"arrayBuffer\"\n            ];\n            var blocks = [];\n            if (root.JS_SHA256_NO_NODE_JS || !Array.isArray) {\n                Array.isArray = function(obj) {\n                    return Object.prototype.toString.call(obj) === \"[object Array]\";\n                };\n            }\n            if (ARRAY_BUFFER && (root.JS_SHA256_NO_ARRAY_BUFFER_IS_VIEW || !ArrayBuffer.isView)) {\n                ArrayBuffer.isView = function(obj) {\n                    return typeof obj === \"object\" && obj.buffer && obj.buffer.constructor === ArrayBuffer;\n                };\n            }\n            var createOutputMethod = function(outputType, is2242) {\n                return function(message) {\n                    return new Sha256(is2242, true).update(message)[outputType]();\n                };\n            };\n            var createMethod = function(is2242) {\n                var method2 = createOutputMethod(\"hex\", is2242);\n                if (NODE_JS) {\n                    method2 = nodeWrap(method2, is2242);\n                }\n                method2.create = function() {\n                    return new Sha256(is2242);\n                };\n                method2.update = function(message) {\n                    return method2.create().update(message);\n                };\n                for(var i3 = 0; i3 < OUTPUT_TYPES.length; ++i3){\n                    var type = OUTPUT_TYPES[i3];\n                    method2[type] = createOutputMethod(type, is2242);\n                }\n                return method2;\n            };\n            var nodeWrap = function(method, is224) {\n                var crypto = eval(\"require('crypto')\");\n                var Buffer = eval(\"require('buffer').Buffer\");\n                var algorithm = is224 ? \"sha224\" : \"sha256\";\n                var nodeMethod = function(message) {\n                    if (typeof message === \"string\") {\n                        return crypto.createHash(algorithm).update(message, \"utf8\").digest(\"hex\");\n                    } else {\n                        if (message === null || message === void 0) {\n                            throw new Error(ERROR);\n                        } else if (message.constructor === ArrayBuffer) {\n                            message = new Uint8Array(message);\n                        }\n                    }\n                    if (Array.isArray(message) || ArrayBuffer.isView(message) || message.constructor === Buffer) {\n                        return crypto.createHash(algorithm).update(new Buffer(message)).digest(\"hex\");\n                    } else {\n                        return method(message);\n                    }\n                };\n                return nodeMethod;\n            };\n            var createHmacOutputMethod = function(outputType, is2242) {\n                return function(key, message) {\n                    return new HmacSha256(key, is2242, true).update(message)[outputType]();\n                };\n            };\n            var createHmacMethod = function(is2242) {\n                var method2 = createHmacOutputMethod(\"hex\", is2242);\n                method2.create = function(key) {\n                    return new HmacSha256(key, is2242);\n                };\n                method2.update = function(key, message) {\n                    return method2.create(key).update(message);\n                };\n                for(var i4 = 0; i4 < OUTPUT_TYPES.length; ++i4){\n                    var type = OUTPUT_TYPES[i4];\n                    method2[type] = createHmacOutputMethod(type, is2242);\n                }\n                return method2;\n            };\n            function Sha256(is2242, sharedMemory) {\n                if (sharedMemory) {\n                    blocks[0] = blocks[16] = blocks[1] = blocks[2] = blocks[3] = blocks[4] = blocks[5] = blocks[6] = blocks[7] = blocks[8] = blocks[9] = blocks[10] = blocks[11] = blocks[12] = blocks[13] = blocks[14] = blocks[15] = 0;\n                    this.blocks = blocks;\n                } else {\n                    this.blocks = [\n                        0,\n                        0,\n                        0,\n                        0,\n                        0,\n                        0,\n                        0,\n                        0,\n                        0,\n                        0,\n                        0,\n                        0,\n                        0,\n                        0,\n                        0,\n                        0,\n                        0\n                    ];\n                }\n                if (is2242) {\n                    this.h0 = 3238371032;\n                    this.h1 = 914150663;\n                    this.h2 = 812702999;\n                    this.h3 = 4144912697;\n                    this.h4 = 4290775857;\n                    this.h5 = 1750603025;\n                    this.h6 = 1694076839;\n                    this.h7 = 3204075428;\n                } else {\n                    this.h0 = 1779033703;\n                    this.h1 = 3144134277;\n                    this.h2 = 1013904242;\n                    this.h3 = 2773480762;\n                    this.h4 = 1359893119;\n                    this.h5 = 2600822924;\n                    this.h6 = 528734635;\n                    this.h7 = 1541459225;\n                }\n                this.block = this.start = this.bytes = this.hBytes = 0;\n                this.finalized = this.hashed = false;\n                this.first = true;\n                this.is224 = is2242;\n            }\n            Sha256.prototype.update = function(message) {\n                if (this.finalized) {\n                    return;\n                }\n                var notString, type = typeof message;\n                if (type !== \"string\") {\n                    if (type === \"object\") {\n                        if (message === null) {\n                            throw new Error(ERROR);\n                        } else if (ARRAY_BUFFER && message.constructor === ArrayBuffer) {\n                            message = new Uint8Array(message);\n                        } else if (!Array.isArray(message)) {\n                            if (!ARRAY_BUFFER || !ArrayBuffer.isView(message)) {\n                                throw new Error(ERROR);\n                            }\n                        }\n                    } else {\n                        throw new Error(ERROR);\n                    }\n                    notString = true;\n                }\n                var code, index = 0, i5, length = message.length, blocks2 = this.blocks;\n                while(index < length){\n                    if (this.hashed) {\n                        this.hashed = false;\n                        blocks2[0] = this.block;\n                        blocks2[16] = blocks2[1] = blocks2[2] = blocks2[3] = blocks2[4] = blocks2[5] = blocks2[6] = blocks2[7] = blocks2[8] = blocks2[9] = blocks2[10] = blocks2[11] = blocks2[12] = blocks2[13] = blocks2[14] = blocks2[15] = 0;\n                    }\n                    if (notString) {\n                        for(i5 = this.start; index < length && i5 < 64; ++index){\n                            blocks2[i5 >> 2] |= message[index] << SHIFT[(i5++) & 3];\n                        }\n                    } else {\n                        for(i5 = this.start; index < length && i5 < 64; ++index){\n                            code = message.charCodeAt(index);\n                            if (code < 128) {\n                                blocks2[i5 >> 2] |= code << SHIFT[(i5++) & 3];\n                            } else if (code < 2048) {\n                                blocks2[i5 >> 2] |= (192 | code >> 6) << SHIFT[(i5++) & 3];\n                                blocks2[i5 >> 2] |= (128 | code & 63) << SHIFT[(i5++) & 3];\n                            } else if (code < 55296 || code >= 57344) {\n                                blocks2[i5 >> 2] |= (224 | code >> 12) << SHIFT[(i5++) & 3];\n                                blocks2[i5 >> 2] |= (128 | code >> 6 & 63) << SHIFT[(i5++) & 3];\n                                blocks2[i5 >> 2] |= (128 | code & 63) << SHIFT[(i5++) & 3];\n                            } else {\n                                code = 65536 + ((code & 1023) << 10 | message.charCodeAt(++index) & 1023);\n                                blocks2[i5 >> 2] |= (240 | code >> 18) << SHIFT[(i5++) & 3];\n                                blocks2[i5 >> 2] |= (128 | code >> 12 & 63) << SHIFT[(i5++) & 3];\n                                blocks2[i5 >> 2] |= (128 | code >> 6 & 63) << SHIFT[(i5++) & 3];\n                                blocks2[i5 >> 2] |= (128 | code & 63) << SHIFT[(i5++) & 3];\n                            }\n                        }\n                    }\n                    this.lastByteIndex = i5;\n                    this.bytes += i5 - this.start;\n                    if (i5 >= 64) {\n                        this.block = blocks2[16];\n                        this.start = i5 - 64;\n                        this.hash();\n                        this.hashed = true;\n                    } else {\n                        this.start = i5;\n                    }\n                }\n                if (this.bytes > 4294967295) {\n                    this.hBytes += this.bytes / 4294967296 << 0;\n                    this.bytes = this.bytes % 4294967296;\n                }\n                return this;\n            };\n            Sha256.prototype.finalize = function() {\n                if (this.finalized) {\n                    return;\n                }\n                this.finalized = true;\n                var blocks2 = this.blocks, i6 = this.lastByteIndex;\n                blocks2[16] = this.block;\n                blocks2[i6 >> 2] |= EXTRA[i6 & 3];\n                this.block = blocks2[16];\n                if (i6 >= 56) {\n                    if (!this.hashed) {\n                        this.hash();\n                    }\n                    blocks2[0] = this.block;\n                    blocks2[16] = blocks2[1] = blocks2[2] = blocks2[3] = blocks2[4] = blocks2[5] = blocks2[6] = blocks2[7] = blocks2[8] = blocks2[9] = blocks2[10] = blocks2[11] = blocks2[12] = blocks2[13] = blocks2[14] = blocks2[15] = 0;\n                }\n                blocks2[14] = this.hBytes << 3 | this.bytes >>> 29;\n                blocks2[15] = this.bytes << 3;\n                this.hash();\n            };\n            Sha256.prototype.hash = function() {\n                var a = this.h0, b = this.h1, c = this.h2, d = this.h3, e = this.h4, f = this.h5, g = this.h6, h = this.h7, blocks2 = this.blocks, j, s0, s1, maj, t1, t2, ch, ab, da, cd, bc;\n                for(j = 16; j < 64; ++j){\n                    t1 = blocks2[j - 15];\n                    s0 = (t1 >>> 7 | t1 << 25) ^ (t1 >>> 18 | t1 << 14) ^ t1 >>> 3;\n                    t1 = blocks2[j - 2];\n                    s1 = (t1 >>> 17 | t1 << 15) ^ (t1 >>> 19 | t1 << 13) ^ t1 >>> 10;\n                    blocks2[j] = blocks2[j - 16] + s0 + blocks2[j - 7] + s1 << 0;\n                }\n                bc = b & c;\n                for(j = 0; j < 64; j += 4){\n                    if (this.first) {\n                        if (this.is224) {\n                            ab = 300032;\n                            t1 = blocks2[0] - 1413257819;\n                            h = t1 - 150054599 << 0;\n                            d = t1 + 24177077 << 0;\n                        } else {\n                            ab = 704751109;\n                            t1 = blocks2[0] - 210244248;\n                            h = t1 - 1521486534 << 0;\n                            d = t1 + 143694565 << 0;\n                        }\n                        this.first = false;\n                    } else {\n                        s0 = (a >>> 2 | a << 30) ^ (a >>> 13 | a << 19) ^ (a >>> 22 | a << 10);\n                        s1 = (e >>> 6 | e << 26) ^ (e >>> 11 | e << 21) ^ (e >>> 25 | e << 7);\n                        ab = a & b;\n                        maj = ab ^ a & c ^ bc;\n                        ch = e & f ^ ~e & g;\n                        t1 = h + s1 + ch + K[j] + blocks2[j];\n                        t2 = s0 + maj;\n                        h = d + t1 << 0;\n                        d = t1 + t2 << 0;\n                    }\n                    s0 = (d >>> 2 | d << 30) ^ (d >>> 13 | d << 19) ^ (d >>> 22 | d << 10);\n                    s1 = (h >>> 6 | h << 26) ^ (h >>> 11 | h << 21) ^ (h >>> 25 | h << 7);\n                    da = d & a;\n                    maj = da ^ d & b ^ ab;\n                    ch = h & e ^ ~h & f;\n                    t1 = g + s1 + ch + K[j + 1] + blocks2[j + 1];\n                    t2 = s0 + maj;\n                    g = c + t1 << 0;\n                    c = t1 + t2 << 0;\n                    s0 = (c >>> 2 | c << 30) ^ (c >>> 13 | c << 19) ^ (c >>> 22 | c << 10);\n                    s1 = (g >>> 6 | g << 26) ^ (g >>> 11 | g << 21) ^ (g >>> 25 | g << 7);\n                    cd = c & d;\n                    maj = cd ^ c & a ^ da;\n                    ch = g & h ^ ~g & e;\n                    t1 = f + s1 + ch + K[j + 2] + blocks2[j + 2];\n                    t2 = s0 + maj;\n                    f = b + t1 << 0;\n                    b = t1 + t2 << 0;\n                    s0 = (b >>> 2 | b << 30) ^ (b >>> 13 | b << 19) ^ (b >>> 22 | b << 10);\n                    s1 = (f >>> 6 | f << 26) ^ (f >>> 11 | f << 21) ^ (f >>> 25 | f << 7);\n                    bc = b & c;\n                    maj = bc ^ b & d ^ cd;\n                    ch = f & g ^ ~f & h;\n                    t1 = e + s1 + ch + K[j + 3] + blocks2[j + 3];\n                    t2 = s0 + maj;\n                    e = a + t1 << 0;\n                    a = t1 + t2 << 0;\n                }\n                this.h0 = this.h0 + a << 0;\n                this.h1 = this.h1 + b << 0;\n                this.h2 = this.h2 + c << 0;\n                this.h3 = this.h3 + d << 0;\n                this.h4 = this.h4 + e << 0;\n                this.h5 = this.h5 + f << 0;\n                this.h6 = this.h6 + g << 0;\n                this.h7 = this.h7 + h << 0;\n            };\n            Sha256.prototype.hex = function() {\n                this.finalize();\n                var h0 = this.h0, h1 = this.h1, h2 = this.h2, h3 = this.h3, h4 = this.h4, h5 = this.h5, h6 = this.h6, h7 = this.h7;\n                var hex = HEX_CHARS[h0 >> 28 & 15] + HEX_CHARS[h0 >> 24 & 15] + HEX_CHARS[h0 >> 20 & 15] + HEX_CHARS[h0 >> 16 & 15] + HEX_CHARS[h0 >> 12 & 15] + HEX_CHARS[h0 >> 8 & 15] + HEX_CHARS[h0 >> 4 & 15] + HEX_CHARS[h0 & 15] + HEX_CHARS[h1 >> 28 & 15] + HEX_CHARS[h1 >> 24 & 15] + HEX_CHARS[h1 >> 20 & 15] + HEX_CHARS[h1 >> 16 & 15] + HEX_CHARS[h1 >> 12 & 15] + HEX_CHARS[h1 >> 8 & 15] + HEX_CHARS[h1 >> 4 & 15] + HEX_CHARS[h1 & 15] + HEX_CHARS[h2 >> 28 & 15] + HEX_CHARS[h2 >> 24 & 15] + HEX_CHARS[h2 >> 20 & 15] + HEX_CHARS[h2 >> 16 & 15] + HEX_CHARS[h2 >> 12 & 15] + HEX_CHARS[h2 >> 8 & 15] + HEX_CHARS[h2 >> 4 & 15] + HEX_CHARS[h2 & 15] + HEX_CHARS[h3 >> 28 & 15] + HEX_CHARS[h3 >> 24 & 15] + HEX_CHARS[h3 >> 20 & 15] + HEX_CHARS[h3 >> 16 & 15] + HEX_CHARS[h3 >> 12 & 15] + HEX_CHARS[h3 >> 8 & 15] + HEX_CHARS[h3 >> 4 & 15] + HEX_CHARS[h3 & 15] + HEX_CHARS[h4 >> 28 & 15] + HEX_CHARS[h4 >> 24 & 15] + HEX_CHARS[h4 >> 20 & 15] + HEX_CHARS[h4 >> 16 & 15] + HEX_CHARS[h4 >> 12 & 15] + HEX_CHARS[h4 >> 8 & 15] + HEX_CHARS[h4 >> 4 & 15] + HEX_CHARS[h4 & 15] + HEX_CHARS[h5 >> 28 & 15] + HEX_CHARS[h5 >> 24 & 15] + HEX_CHARS[h5 >> 20 & 15] + HEX_CHARS[h5 >> 16 & 15] + HEX_CHARS[h5 >> 12 & 15] + HEX_CHARS[h5 >> 8 & 15] + HEX_CHARS[h5 >> 4 & 15] + HEX_CHARS[h5 & 15] + HEX_CHARS[h6 >> 28 & 15] + HEX_CHARS[h6 >> 24 & 15] + HEX_CHARS[h6 >> 20 & 15] + HEX_CHARS[h6 >> 16 & 15] + HEX_CHARS[h6 >> 12 & 15] + HEX_CHARS[h6 >> 8 & 15] + HEX_CHARS[h6 >> 4 & 15] + HEX_CHARS[h6 & 15];\n                if (!this.is224) {\n                    hex += HEX_CHARS[h7 >> 28 & 15] + HEX_CHARS[h7 >> 24 & 15] + HEX_CHARS[h7 >> 20 & 15] + HEX_CHARS[h7 >> 16 & 15] + HEX_CHARS[h7 >> 12 & 15] + HEX_CHARS[h7 >> 8 & 15] + HEX_CHARS[h7 >> 4 & 15] + HEX_CHARS[h7 & 15];\n                }\n                return hex;\n            };\n            Sha256.prototype.toString = Sha256.prototype.hex;\n            Sha256.prototype.digest = function() {\n                this.finalize();\n                var h0 = this.h0, h1 = this.h1, h2 = this.h2, h3 = this.h3, h4 = this.h4, h5 = this.h5, h6 = this.h6, h7 = this.h7;\n                var arr = [\n                    h0 >> 24 & 255,\n                    h0 >> 16 & 255,\n                    h0 >> 8 & 255,\n                    h0 & 255,\n                    h1 >> 24 & 255,\n                    h1 >> 16 & 255,\n                    h1 >> 8 & 255,\n                    h1 & 255,\n                    h2 >> 24 & 255,\n                    h2 >> 16 & 255,\n                    h2 >> 8 & 255,\n                    h2 & 255,\n                    h3 >> 24 & 255,\n                    h3 >> 16 & 255,\n                    h3 >> 8 & 255,\n                    h3 & 255,\n                    h4 >> 24 & 255,\n                    h4 >> 16 & 255,\n                    h4 >> 8 & 255,\n                    h4 & 255,\n                    h5 >> 24 & 255,\n                    h5 >> 16 & 255,\n                    h5 >> 8 & 255,\n                    h5 & 255,\n                    h6 >> 24 & 255,\n                    h6 >> 16 & 255,\n                    h6 >> 8 & 255,\n                    h6 & 255\n                ];\n                if (!this.is224) {\n                    arr.push(h7 >> 24 & 255, h7 >> 16 & 255, h7 >> 8 & 255, h7 & 255);\n                }\n                return arr;\n            };\n            Sha256.prototype.array = Sha256.prototype.digest;\n            Sha256.prototype.arrayBuffer = function() {\n                this.finalize();\n                var buffer = new ArrayBuffer(this.is224 ? 28 : 32);\n                var dataView = new DataView(buffer);\n                dataView.setUint32(0, this.h0);\n                dataView.setUint32(4, this.h1);\n                dataView.setUint32(8, this.h2);\n                dataView.setUint32(12, this.h3);\n                dataView.setUint32(16, this.h4);\n                dataView.setUint32(20, this.h5);\n                dataView.setUint32(24, this.h6);\n                if (!this.is224) {\n                    dataView.setUint32(28, this.h7);\n                }\n                return buffer;\n            };\n            function HmacSha256(key, is2242, sharedMemory) {\n                var i7, type = typeof key;\n                if (type === \"string\") {\n                    var bytes = [], length = key.length, index = 0, code;\n                    for(i7 = 0; i7 < length; ++i7){\n                        code = key.charCodeAt(i7);\n                        if (code < 128) {\n                            bytes[index++] = code;\n                        } else if (code < 2048) {\n                            bytes[index++] = 192 | code >> 6;\n                            bytes[index++] = 128 | code & 63;\n                        } else if (code < 55296 || code >= 57344) {\n                            bytes[index++] = 224 | code >> 12;\n                            bytes[index++] = 128 | code >> 6 & 63;\n                            bytes[index++] = 128 | code & 63;\n                        } else {\n                            code = 65536 + ((code & 1023) << 10 | key.charCodeAt(++i7) & 1023);\n                            bytes[index++] = 240 | code >> 18;\n                            bytes[index++] = 128 | code >> 12 & 63;\n                            bytes[index++] = 128 | code >> 6 & 63;\n                            bytes[index++] = 128 | code & 63;\n                        }\n                    }\n                    key = bytes;\n                } else {\n                    if (type === \"object\") {\n                        if (key === null) {\n                            throw new Error(ERROR);\n                        } else if (ARRAY_BUFFER && key.constructor === ArrayBuffer) {\n                            key = new Uint8Array(key);\n                        } else if (!Array.isArray(key)) {\n                            if (!ARRAY_BUFFER || !ArrayBuffer.isView(key)) {\n                                throw new Error(ERROR);\n                            }\n                        }\n                    } else {\n                        throw new Error(ERROR);\n                    }\n                }\n                if (key.length > 64) {\n                    key = new Sha256(is2242, true).update(key).array();\n                }\n                var oKeyPad = [], iKeyPad = [];\n                for(i7 = 0; i7 < 64; ++i7){\n                    var b = key[i7] || 0;\n                    oKeyPad[i7] = 92 ^ b;\n                    iKeyPad[i7] = 54 ^ b;\n                }\n                Sha256.call(this, is2242, sharedMemory);\n                this.update(iKeyPad);\n                this.oKeyPad = oKeyPad;\n                this.inner = true;\n                this.sharedMemory = sharedMemory;\n            }\n            HmacSha256.prototype = new Sha256();\n            HmacSha256.prototype.finalize = function() {\n                Sha256.prototype.finalize.call(this);\n                if (this.inner) {\n                    this.inner = false;\n                    var innerHash = this.array();\n                    Sha256.call(this, this.is224, this.sharedMemory);\n                    this.update(this.oKeyPad);\n                    this.update(innerHash);\n                    Sha256.prototype.finalize.call(this);\n                }\n            };\n            var exports = createMethod();\n            exports.sha256 = exports;\n            exports.sha224 = createMethod(true);\n            exports.sha256.hmac = createHmacMethod();\n            exports.sha224.hmac = createHmacMethod(true);\n            if (COMMON_JS) {\n                module.exports = exports;\n            } else {\n                root.sha256 = exports.sha256;\n                root.sha224 = exports.sha224;\n                if (AMD) {\n                    define(function() {\n                        return exports;\n                    });\n                }\n            }\n        })();\n    }\n});\n// node_modules/@dfinity/principal/lib/esm/utils/base32.js\nvar alphabet = \"abcdefghijklmnopqrstuvwxyz234567\";\nvar lookupTable = /* @__PURE__ */ Object.create(null);\nfor(let i = 0; i < alphabet.length; i++){\n    lookupTable[alphabet[i]] = i;\n}\nlookupTable[\"0\"] = lookupTable.o;\nlookupTable[\"1\"] = lookupTable.i;\nfunction encode(input) {\n    let skip = 0;\n    let bits = 0;\n    let output = \"\";\n    function encodeByte(byte) {\n        if (skip < 0) {\n            bits |= byte >> -skip;\n        } else {\n            bits = byte << skip & 248;\n        }\n        if (skip > 3) {\n            skip -= 8;\n            return 1;\n        }\n        if (skip < 4) {\n            output += alphabet[bits >> 3];\n            skip += 5;\n        }\n        return 0;\n    }\n    for(let i8 = 0; i8 < input.length;){\n        i8 += encodeByte(input[i8]);\n    }\n    return output + (skip < 0 ? alphabet[bits >> 3] : \"\");\n}\nfunction decode(input) {\n    let skip = 0;\n    let byte = 0;\n    const output = new Uint8Array(input.length * 4 / 3 | 0);\n    let o = 0;\n    function decodeChar(char) {\n        let val = lookupTable[char.toLowerCase()];\n        if (val === void 0) {\n            throw new Error(`Invalid character: ${JSON.stringify(char)}`);\n        }\n        val <<= 3;\n        byte |= val >>> skip;\n        skip += 5;\n        if (skip >= 8) {\n            output[o++] = byte;\n            skip -= 8;\n            if (skip > 0) {\n                byte = val << 5 - skip & 255;\n            } else {\n                byte = 0;\n            }\n        }\n    }\n    for (const c of input){\n        decodeChar(c);\n    }\n    return output.slice(0, o);\n}\n// node_modules/@dfinity/principal/lib/esm/utils/getCrc.js\nvar lookUpTable = new Uint32Array([\n    0,\n    1996959894,\n    3993919788,\n    2567524794,\n    124634137,\n    1886057615,\n    3915621685,\n    2657392035,\n    249268274,\n    2044508324,\n    3772115230,\n    2547177864,\n    162941995,\n    2125561021,\n    3887607047,\n    2428444049,\n    498536548,\n    1789927666,\n    4089016648,\n    2227061214,\n    450548861,\n    1843258603,\n    4107580753,\n    2211677639,\n    325883990,\n    1684777152,\n    4251122042,\n    2321926636,\n    335633487,\n    1661365465,\n    4195302755,\n    2366115317,\n    997073096,\n    1281953886,\n    3579855332,\n    2724688242,\n    1006888145,\n    1258607687,\n    3524101629,\n    2768942443,\n    901097722,\n    1119000684,\n    3686517206,\n    2898065728,\n    853044451,\n    1172266101,\n    3705015759,\n    2882616665,\n    651767980,\n    1373503546,\n    3369554304,\n    3218104598,\n    565507253,\n    1454621731,\n    3485111705,\n    3099436303,\n    671266974,\n    1594198024,\n    3322730930,\n    2970347812,\n    795835527,\n    1483230225,\n    3244367275,\n    3060149565,\n    1994146192,\n    31158534,\n    2563907772,\n    4023717930,\n    1907459465,\n    112637215,\n    2680153253,\n    3904427059,\n    2013776290,\n    251722036,\n    2517215374,\n    3775830040,\n    2137656763,\n    141376813,\n    2439277719,\n    3865271297,\n    1802195444,\n    476864866,\n    2238001368,\n    4066508878,\n    1812370925,\n    453092731,\n    2181625025,\n    4111451223,\n    1706088902,\n    314042704,\n    2344532202,\n    4240017532,\n    1658658271,\n    366619977,\n    2362670323,\n    4224994405,\n    1303535960,\n    984961486,\n    2747007092,\n    3569037538,\n    1256170817,\n    1037604311,\n    2765210733,\n    3554079995,\n    1131014506,\n    879679996,\n    2909243462,\n    3663771856,\n    1141124467,\n    855842277,\n    2852801631,\n    3708648649,\n    1342533948,\n    654459306,\n    3188396048,\n    3373015174,\n    1466479909,\n    544179635,\n    3110523913,\n    3462522015,\n    1591671054,\n    702138776,\n    2966460450,\n    3352799412,\n    1504918807,\n    783551873,\n    3082640443,\n    3233442989,\n    3988292384,\n    2596254646,\n    62317068,\n    1957810842,\n    3939845945,\n    2647816111,\n    81470997,\n    1943803523,\n    3814918930,\n    2489596804,\n    225274430,\n    2053790376,\n    3826175755,\n    2466906013,\n    167816743,\n    2097651377,\n    4027552580,\n    2265490386,\n    503444072,\n    1762050814,\n    4150417245,\n    2154129355,\n    426522225,\n    1852507879,\n    4275313526,\n    2312317920,\n    282753626,\n    1742555852,\n    4189708143,\n    2394877945,\n    397917763,\n    1622183637,\n    3604390888,\n    2714866558,\n    953729732,\n    1340076626,\n    3518719985,\n    2797360999,\n    1068828381,\n    1219638859,\n    3624741850,\n    2936675148,\n    906185462,\n    1090812512,\n    3747672003,\n    2825379669,\n    829329135,\n    1181335161,\n    3412177804,\n    3160834842,\n    628085408,\n    1382605366,\n    3423369109,\n    3138078467,\n    570562233,\n    1426400815,\n    3317316542,\n    2998733608,\n    733239954,\n    1555261956,\n    3268935591,\n    3050360625,\n    752459403,\n    1541320221,\n    2607071920,\n    3965973030,\n    1969922972,\n    40735498,\n    2617837225,\n    3943577151,\n    1913087877,\n    83908371,\n    2512341634,\n    3803740692,\n    2075208622,\n    213261112,\n    2463272603,\n    3855990285,\n    2094854071,\n    198958881,\n    2262029012,\n    4057260610,\n    1759359992,\n    534414190,\n    2176718541,\n    4139329115,\n    1873836001,\n    414664567,\n    2282248934,\n    4279200368,\n    1711684554,\n    285281116,\n    2405801727,\n    4167216745,\n    1634467795,\n    376229701,\n    2685067896,\n    3608007406,\n    1308918612,\n    956543938,\n    2808555105,\n    3495958263,\n    1231636301,\n    1047427035,\n    2932959818,\n    3654703836,\n    1088359270,\n    936918000,\n    2847714899,\n    3736837829,\n    1202900863,\n    817233897,\n    3183342108,\n    3401237130,\n    1404277552,\n    615818150,\n    3134207493,\n    3453421203,\n    1423857449,\n    601450431,\n    3009837614,\n    3294710456,\n    1567103746,\n    711928724,\n    3020668471,\n    3272380065,\n    1510334235,\n    755167117\n]);\nfunction getCrc32(buf) {\n    const b = new Uint8Array(buf);\n    let crc = -1;\n    for(let i9 = 0; i9 < b.length; i9++){\n        const byte = b[i9];\n        const t = (byte ^ crc) & 255;\n        crc = lookUpTable[t] ^ crc >>> 8;\n    }\n    return (crc ^ -1) >>> 0;\n}\n// node_modules/@dfinity/principal/lib/esm/utils/sha224.js\nvar import_js_sha256 = __toESM(require_sha256());\nfunction sha224(data) {\n    const shaObj = import_js_sha256.sha224.create();\n    shaObj.update(data);\n    return new Uint8Array(shaObj.array());\n}\n// node_modules/@dfinity/principal/lib/esm/index.js\nvar SELF_AUTHENTICATING_SUFFIX = 2;\nvar ANONYMOUS_SUFFIX = 4;\nvar fromHexString = (hexString)=>{\n    var _a;\n    return new Uint8Array(((_a = hexString.match(/.{1,2}/g)) !== null && _a !== void 0 ? _a : []).map((byte)=>parseInt(byte, 16)\n    ));\n};\nvar toHexString = (bytes)=>bytes.reduce((str, byte)=>str + byte.toString(16).padStart(2, \"0\")\n    , \"\")\n;\nvar Principal = class {\n    static anonymous() {\n        return new this(new Uint8Array([\n            ANONYMOUS_SUFFIX\n        ]));\n    }\n    static selfAuthenticating(publicKey) {\n        const sha = sha224(publicKey);\n        return new this(new Uint8Array([\n            ...sha,\n            SELF_AUTHENTICATING_SUFFIX\n        ]));\n    }\n    static from(other) {\n        if (typeof other === \"string\") {\n            return Principal.fromText(other);\n        } else if (typeof other === \"object\" && other !== null && other._isPrincipal === true) {\n            return new Principal(other._arr);\n        }\n        throw new Error(`Impossible to convert ${JSON.stringify(other)} to Principal.`);\n    }\n    static fromHex(hex) {\n        return new this(fromHexString(hex));\n    }\n    static fromText(text2) {\n        const canisterIdNoDash = text2.toLowerCase().replace(/-/g, \"\");\n        let arr = decode(canisterIdNoDash);\n        arr = arr.slice(4, arr.length);\n        const principal = new this(arr);\n        if (principal.toText() !== text2) {\n            throw new Error(`Principal \"${principal.toText()}\" does not have a valid checksum (original value \"${text2}\" may not be a valid Principal ID).`);\n        }\n        return principal;\n    }\n    static fromUint8Array(arr) {\n        return new this(arr);\n    }\n    isAnonymous() {\n        return this._arr.byteLength === 1 && this._arr[0] === ANONYMOUS_SUFFIX;\n    }\n    toUint8Array() {\n        return this._arr;\n    }\n    toHex() {\n        return toHexString(this._arr).toUpperCase();\n    }\n    toText() {\n        const checksumArrayBuf = new ArrayBuffer(4);\n        const view = new DataView(checksumArrayBuf);\n        view.setUint32(0, getCrc32(this._arr));\n        const checksum = new Uint8Array(checksumArrayBuf);\n        const bytes = Uint8Array.from(this._arr);\n        const array = new Uint8Array([\n            ...checksum,\n            ...bytes\n        ]);\n        const result = encode(array);\n        const matches = result.match(/.{1,5}/g);\n        if (!matches) {\n            throw new Error();\n        }\n        return matches.join(\"-\");\n    }\n    toString() {\n        return this.toText();\n    }\n    constructor(_arr){\n        this._arr = _arr;\n        this._isPrincipal = true;\n    }\n};\nexports.Principal = Principal;\nvar _ic;\n// node_modules/azle/src/lib/ic.ts\nvar ic = (_ic = globalThis.ic) !== null && _ic !== void 0 ? _ic : {};\n// node_modules/azle/src/lib/candid_types/variant.ts\nfunction match(variant, matcher) {\n    for(const key in variant){\n        if (key in matcher) {\n            return matcher[key](variant[key]);\n        }\n    }\n    return matcher._();\n}\n// node_modules/azle/src/lib/candid_types/index.ts\nvar Opt = {\n    Some: (value)=>({\n            Some: value\n        })\n    ,\n    None: Object.freeze({\n        None: null\n    })\n};\n// node_modules/azle/src/lib/results.ts\nvar Result = {\n    Ok: (value)=>({\n            Ok: value\n        })\n    ,\n    Err: (value)=>({\n            Err: value\n        })\n};\n// node_modules/azle/src/lib/stable_b_tree_map.ts\nvar StableBTreeMap = class {\n    containsKey(key) {\n        if (arguments.length === 0) {\n            throw new Error(\"An argument for 'key' was not provided\");\n        }\n        return ic.stableBTreeMapContainsKey(this.memoryId, key);\n    }\n    get(key) {\n        if (arguments.length === 0) {\n            throw new Error(\"An argument for 'key' was not provided\");\n        }\n        return ic.stableBTreeMapGet(this.memoryId, key);\n    }\n    insert(key, value) {\n        if (arguments.length === 0) {\n            throw new Error(\"An argument for 'key' was not provided\");\n        }\n        if (arguments.length === 1) {\n            throw new Error(\"An argument for 'value' was not provided\");\n        }\n        return ic.stableBTreeMapInsert(this.memoryId, key, value);\n    }\n    isEmpty() {\n        return ic.stableBTreeMapIsEmpty(this.memoryId);\n    }\n    items() {\n        return ic.stableBTreeMapItems(this.memoryId);\n    }\n    keys() {\n        return ic.stableBTreeMapKeys(this.memoryId);\n    }\n    len() {\n        return ic.stableBTreeMapLen(this.memoryId);\n    }\n    remove(key) {\n        if (arguments.length === 0) {\n            throw new Error(\"An argument for 'key' was not provided\");\n        }\n        return ic.stableBTreeMapRemove(this.memoryId, key);\n    }\n    values() {\n        return ic.stableBTreeMapValues(this.memoryId);\n    }\n    constructor(memoryId, maxKeySize, maxValueSize){\n        this.memoryId = memoryId;\n    }\n};\n// node_modules/uuid/dist/esm-browser/rng.js\nvar getRandomValues;\nvar rnds8 = new Uint8Array(16);\nfunction rng() {\n    if (!getRandomValues) {\n        getRandomValues = typeof crypto !== \"undefined\" && crypto.getRandomValues && crypto.getRandomValues.bind(crypto);\n        if (!getRandomValues) {\n            throw new Error(\"crypto.getRandomValues() not supported. See https://github.com/uuidjs/uuid#getrandomvalues-not-supported\");\n        }\n    }\n    return getRandomValues(rnds8);\n}\n// node_modules/uuid/dist/esm-browser/stringify.js\nvar byteToHex = [];\nfor(let i1 = 0; i1 < 256; ++i1){\n    byteToHex.push((i1 + 256).toString(16).slice(1));\n}\nfunction unsafeStringify(arr, offset = 0) {\n    return byteToHex[arr[offset + 0]] + byteToHex[arr[offset + 1]] + byteToHex[arr[offset + 2]] + byteToHex[arr[offset + 3]] + \"-\" + byteToHex[arr[offset + 4]] + byteToHex[arr[offset + 5]] + \"-\" + byteToHex[arr[offset + 6]] + byteToHex[arr[offset + 7]] + \"-\" + byteToHex[arr[offset + 8]] + byteToHex[arr[offset + 9]] + \"-\" + byteToHex[arr[offset + 10]] + byteToHex[arr[offset + 11]] + byteToHex[arr[offset + 12]] + byteToHex[arr[offset + 13]] + byteToHex[arr[offset + 14]] + byteToHex[arr[offset + 15]];\n}\n// node_modules/uuid/dist/esm-browser/native.js\nvar randomUUID = typeof crypto !== \"undefined\" && crypto.randomUUID && crypto.randomUUID.bind(crypto);\nvar native_default = {\n    randomUUID\n};\n// node_modules/uuid/dist/esm-browser/v4.js\nfunction v4(options, buf, offset) {\n    if (native_default.randomUUID && !buf && !options) {\n        return native_default.randomUUID();\n    }\n    options = options || {};\n    const rnds = options.random || (options.rng || rng)();\n    rnds[6] = rnds[6] & 15 | 64;\n    rnds[8] = rnds[8] & 63 | 128;\n    if (buf) {\n        offset = offset || 0;\n        for(let i10 = 0; i10 < 16; ++i10){\n            buf[offset + i10] = rnds[i10];\n        }\n        return buf;\n    }\n    return unsafeStringify(rnds);\n}\nvar v4_default = v4;\n// src/index.ts\nvar taskStorage = new StableBTreeMap(0, 44, 512);\nvar initialLoadSize = 4;\nfunction getInitialTasks() {\n    const initialTasks = taskStorage.values().slice(0, initialLoadSize);\n    return Result.Ok(initialTasks);\n}\nexports.getInitialTasks = getInitialTasks;\nfunction loadMoreTasks(offset, limit) {\n    const moreTasks = taskStorage.values().slice(offset, offset + limit);\n    return Result.Ok(moreTasks);\n}\nexports.loadMoreTasks = loadMoreTasks;\nfunction getTask(id) {\n    return match(taskStorage.get(id), {\n        Some: (task)=>{\n            if (task.creator.toString() !== ic.caller().toString()) {\n                return Result.Err(\"You are not authorized to access Task\");\n            }\n            return Result.Ok(task);\n        },\n        None: ()=>Result.Err(`Task with id:${id} not found`)\n    });\n}\nexports.getTask = getTask;\nfunction getTaskByTags(tag) {\n    const relatedTask = taskStorage.values().filter((task)=>task.tags.includes(tag)\n    );\n    return Result.Ok(relatedTask);\n}\nexports.getTaskByTags = getTaskByTags;\nfunction searchTasks(searchInput) {\n    const lowerCaseSearchInput = searchInput.toLowerCase();\n    try {\n        const searchedTask = taskStorage.values().filter((task)=>task.title.toLowerCase().includes(lowerCaseSearchInput) || task.description.toLowerCase().includes(lowerCaseSearchInput)\n        );\n        return Result.Ok(searchedTask);\n    } catch (err) {\n        return Result.Err(\"Error finding the task\");\n    }\n}\nexports.searchTasks = searchTasks;\nfunction completedTask(id) {\n    return match(taskStorage.get(id), {\n        Some: (task)=>{\n            if (!task.assigned_to) {\n                return Result.Err(\"No one was assigned the task\");\n            }\n            const completeTask = _objectSpread({}, task, {\n                status: \"Completed\"\n            });\n            taskStorage.insert(task.id, completeTask);\n            return Result.Ok(completeTask);\n        },\n        None: ()=>Result.Err(`Task with id:${id} not found`)\n    });\n}\nexports.completedTask = completedTask;\nfunction addTask(payload) {\n    if (!payload.title || !payload.description || !payload.assigned_to || !payload.due_date) {\n        return Result.Err(\"Missing or invalid input data\");\n    }\n    try {\n        const newTask = _objectSpread({\n            creator: ic.caller(),\n            id: v4_default(),\n            created_date: ic.time(),\n            updated_at: Opt.None,\n            tags: [],\n            status: \"In Progress\",\n            priority: \"\",\n            comments: []\n        }, payload);\n        taskStorage.insert(newTask.id, newTask);\n        return Result.Ok(newTask);\n    } catch (err) {\n        return Result.Err(\"Issue encountered when Creating Task\");\n    }\n}\nexports.addTask = addTask;\nfunction addTags(id, tags) {\n    if (!tags || tags.length === 0) {\n        return Result.Err(\"Invalid tags\");\n    }\n    return match(taskStorage.get(id), {\n        Some: (task)=>{\n            if (task.creator.toString() !== ic.caller().toString()) {\n                return Result.Err(\"You are not authorized to access Task\");\n            }\n            const updatedTask = _objectSpread({}, task, {\n                tags: [\n                    ...task.tags,\n                    ...tags\n                ],\n                updated_at: Opt.Some(ic.time())\n            });\n            taskStorage.insert(task.id, updatedTask);\n            return Result.Ok(updatedTask);\n        },\n        None: ()=>Result.Err(`Task with id:${id} not found`)\n    });\n}\nexports.addTags = addTags;\nfunction updateTask(id, payload) {\n    return match(taskStorage.get(id), {\n        Some: (task)=>{\n            if (task.creator.toString() !== ic.caller().toString()) {\n                return Result.Err(\"You are not authorized to access Task\");\n            }\n            const updatedTask = _objectSpread({}, task, payload, {\n                updated_at: Opt.Some(ic.time())\n            });\n            taskStorage.insert(task.id, updatedTask);\n            return Result.Ok(updatedTask);\n        },\n        None: ()=>Result.Err(`Task with id:${id} not found`)\n    });\n}\nexports.updateTask = updateTask;\nfunction deleteTask(id) {\n    return match(taskStorage.get(id), {\n        Some: (task)=>{\n            if (task.creator.toString() !== ic.caller().toString()) {\n                return Result.Err(\"You are not authorized to access Task\");\n            }\n            taskStorage.remove(id);\n            return Result.Ok(task);\n        },\n        None: ()=>Result.Err(`Task with id:${id} not found, could not be deleted`)\n    });\n}\nexports.deleteTask = deleteTask;\nfunction assignTask(id, assignedTo) {\n    return match(taskStorage.get(id), {\n        Some: (task)=>{\n            if (task.creator.toString() !== ic.caller().toString()) {\n                return Result.Err(\"You are not authorized to assign a task\");\n            }\n            const updatedTask = _objectSpread({}, task, {\n                assigned_to: assignedTo\n            });\n            taskStorage.insert(task.id, updatedTask);\n            return Result.Ok(updatedTask);\n        },\n        None: ()=>Result.Err(`Task with id:${id} not found`)\n    });\n}\nexports.assignTask = assignTask;\nfunction changeTaskStatus(id, newStatus) {\n    return match(taskStorage.get(id), {\n        Some: (task)=>{\n            if (task.creator.toString() !== ic.caller().toString()) {\n                return Result.Err(\"You are not authorized to change the task status\");\n            }\n            const updatedTask = _objectSpread({}, task, {\n                status: newStatus\n            });\n            taskStorage.insert(task.id, updatedTask);\n            return Result.Ok(updatedTask);\n        },\n        None: ()=>Result.Err(`Task with id:${id} not found`)\n    });\n}\nexports.changeTaskStatus = changeTaskStatus;\nfunction getTasksByStatus(status) {\n    const tasksByStatus = taskStorage.values().filter((task)=>task.status === status\n    );\n    return Result.Ok(tasksByStatus);\n}\nexports.getTasksByStatus = getTasksByStatus;\nfunction setTaskPriority(id, priority) {\n    return match(taskStorage.get(id), {\n        Some: (task)=>{\n            if (task.creator.toString() !== ic.caller().toString()) {\n                return Result.Err(\"You are not authorized to set task priority\");\n            }\n            const updatedTask = _objectSpread({}, task, {\n                priority\n            });\n            taskStorage.insert(task.id, updatedTask);\n            return Result.Ok(updatedTask);\n        },\n        None: ()=>Result.Err(`Task with id:${id} not found`)\n    });\n}\nexports.setTaskPriority = setTaskPriority;\nfunction sendDueDateReminder(id) {\n    const now = new Date().toISOString();\n    return match(taskStorage.get(id), {\n        Some: (task)=>{\n            if (task.due_date < now && task.status !== \"Completed\") {\n                return Result.Ok(\"Task is overdue. Please complete it.\");\n            } else {\n                return Result.Err(\"Task is not overdue or already completed.\");\n            }\n        },\n        None: ()=>Result.Err(`Task with id:${id} not found`)\n    });\n}\nexports.sendDueDateReminder = sendDueDateReminder;\nfunction getTasksByCreator(creator) {\n    const creatorTasks = taskStorage.values().filter((task)=>task.creator.toString() === creator.toString()\n    );\n    return Result.Ok(creatorTasks);\n}\nexports.getTasksByCreator = getTasksByCreator;\nfunction getOverdueTasks() {\n    const now = new Date().toISOString();\n    const overdueTasks = taskStorage.values().filter((task)=>task.due_date < now && task.status !== \"Completed\"\n    );\n    return Result.Ok(overdueTasks);\n}\nexports.getOverdueTasks = getOverdueTasks;\nfunction addTaskComment(id, comment) {\n    return match(taskStorage.get(id), {\n        Some: (task)=>{\n            const updatedComments = [\n                ...task.comments,\n                comment\n            ];\n            const updatedTask = _objectSpread({}, task, {\n                comments: updatedComments\n            });\n            taskStorage.insert(task.id, updatedTask);\n            return Result.Ok(updatedTask);\n        },\n        None: ()=>Result.Err(`Task with id:${id} not found`)\n    });\n}\nexports.addTaskComment = addTaskComment;\nglobalThis.crypto = {\n    getRandomValues: ()=>{\n        let array = new Uint8Array(32);\n        for(let i11 = 0; i11 < array.length; i11++){\n            array[i11] = Math.floor(Math.random() * 256);\n        }\n        return array;\n    }\n};\n\n        ";
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 thread_local! {
     static _CDK_RNG_REF_CELL : std::cell::RefCell < rand::rngs::StdRng > =
@@ -3181,7 +3181,7 @@ impl ic_stable_structures::BoundedStorable for StableBTreeMap0KeyType {
     PartialEq,
     Clone
 )]
-struct StableBTreeMap0ValueType(SmartHomeDevice);
+struct StableBTreeMap0ValueType(Task);
 impl CdkActTryIntoVmValue<&mut boa_engine::Context<'_>, boa_engine::JsValue>
 for StableBTreeMap0ValueType {
     fn try_into_vm_value(
@@ -3218,7 +3218,7 @@ impl ic_stable_structures::Storable for StableBTreeMap0ValueType {
     }
 }
 impl ic_stable_structures::BoundedStorable for StableBTreeMap0ValueType {
-    const MAX_SIZE: u32 = 1024u32;
+    const MAX_SIZE: u32 = 512u32;
     const IS_FIXED_SIZE: bool = false;
 }
 fn unwrap_or_trap<SuccessValue, Callback>(callback: Callback) -> SuccessValue
@@ -3465,11 +3465,9 @@ fn post_upgrade() {
             })
     })
 }
-#[ic_cdk_macros::query(name = "searchDevices")]
-#[candid::candid_method(query, rename = "searchDevices")]
-async fn _cdk_user_defined_searchDevices(
-    _cdk_user_defined_query: String,
-) -> (_AzleResult<Vec<SmartHomeDevice>, String>) {
+#[ic_cdk_macros::query(name = "getInitialTasks")]
+#[candid::candid_method(query, rename = "getInitialTasks")]
+async fn _cdk_user_defined_getInitialTasks() -> (_AzleResult<Vec<Task>, String>) {
     unwrap_or_trap(|| {
         BOA_CONTEXT_REF_CELL
             .with(|boa_context_ref_cell| {
@@ -3483,7 +3481,7 @@ async fn _cdk_user_defined_searchDevices(
                 METHOD_NAME_REF_CELL
                     .with(|method_name_ref_cell| {
                         let mut method_name_mut = method_name_ref_cell.borrow_mut();
-                        *method_name_mut = "searchDevices".to_string();
+                        *method_name_mut = "getInitialTasks".to_string();
                     });
                 MANUAL_REF_CELL
                     .with(|manual_ref_cell| {
@@ -3498,65 +3496,11 @@ async fn _cdk_user_defined_searchDevices(
                         "'exports' is not an object".to_string(),
                     ))?;
                 let function_js_value = exports_js_object
-                    .get("searchDevices", &mut boa_context)?;
+                    .get("getInitialTasks", &mut boa_context)?;
                 let function_js_object = function_js_value
                     .as_object()
                     .ok_or_else(|| RuntimeError::ReferenceError(
-                        format!("{} is not defined", "searchDevices"),
-                    ))?;
-                let boa_return_value = function_js_object
-                    .call(
-                        &boa_engine::JsValue::Null,
-                        &[_cdk_user_defined_query.try_into_vm_value(&mut boa_context)?],
-                        &mut boa_context,
-                    )?;
-                let final_return_value = async_await_result_handler(
-                    &mut boa_context,
-                    &boa_return_value,
-                    &uuid,
-                    "searchDevices",
-                    false,
-                )?;
-                Ok(final_return_value.try_from_vm_value(&mut *boa_context)?)
-            })
-    })
-}
-#[ic_cdk_macros::query(name = "getDevices")]
-#[candid::candid_method(query, rename = "getDevices")]
-async fn _cdk_user_defined_getDevices() -> (_AzleResult<Vec<SmartHomeDevice>, String>) {
-    unwrap_or_trap(|| {
-        BOA_CONTEXT_REF_CELL
-            .with(|boa_context_ref_cell| {
-                let mut boa_context = boa_context_ref_cell.borrow_mut();
-                let uuid = uuid::Uuid::new_v4().to_string();
-                UUID_REF_CELL
-                    .with(|uuid_ref_cell| {
-                        let mut uuid_mut = uuid_ref_cell.borrow_mut();
-                        *uuid_mut = uuid.clone();
-                    });
-                METHOD_NAME_REF_CELL
-                    .with(|method_name_ref_cell| {
-                        let mut method_name_mut = method_name_ref_cell.borrow_mut();
-                        *method_name_mut = "getDevices".to_string();
-                    });
-                MANUAL_REF_CELL
-                    .with(|manual_ref_cell| {
-                        let mut manual_mut = manual_ref_cell.borrow_mut();
-                        *manual_mut = false;
-                    });
-                let exports_js_value = boa_context
-                    .eval(boa_engine::Source::from_bytes("exports"))?;
-                let exports_js_object = exports_js_value
-                    .as_object()
-                    .ok_or_else(|| RuntimeError::TypeError(
-                        "'exports' is not an object".to_string(),
-                    ))?;
-                let function_js_value = exports_js_object
-                    .get("getDevices", &mut boa_context)?;
-                let function_js_object = function_js_value
-                    .as_object()
-                    .ok_or_else(|| RuntimeError::ReferenceError(
-                        format!("{} is not defined", "getDevices"),
+                        format!("{} is not defined", "getInitialTasks"),
                     ))?;
                 let boa_return_value = function_js_object
                     .call(&boa_engine::JsValue::Null, &[], &mut boa_context)?;
@@ -3564,18 +3508,19 @@ async fn _cdk_user_defined_getDevices() -> (_AzleResult<Vec<SmartHomeDevice>, St
                     &mut boa_context,
                     &boa_return_value,
                     &uuid,
-                    "getDevices",
+                    "getInitialTasks",
                     false,
                 )?;
                 Ok(final_return_value.try_from_vm_value(&mut *boa_context)?)
             })
     })
 }
-#[ic_cdk_macros::query(name = "getDevice")]
-#[candid::candid_method(query, rename = "getDevice")]
-async fn _cdk_user_defined_getDevice(
-    _cdk_user_defined_id: String,
-) -> (_AzleResult<SmartHomeDevice, String>) {
+#[ic_cdk_macros::query(name = "loadMoreTasks")]
+#[candid::candid_method(query, rename = "loadMoreTasks")]
+async fn _cdk_user_defined_loadMoreTasks(
+    _cdk_user_defined_offset: _CdkFloat64,
+    _cdk_user_defined_limit: _CdkFloat64,
+) -> (_AzleResult<Vec<Task>, String>) {
     unwrap_or_trap(|| {
         BOA_CONTEXT_REF_CELL
             .with(|boa_context_ref_cell| {
@@ -3589,7 +3534,7 @@ async fn _cdk_user_defined_getDevice(
                 METHOD_NAME_REF_CELL
                     .with(|method_name_ref_cell| {
                         let mut method_name_mut = method_name_ref_cell.borrow_mut();
-                        *method_name_mut = "getDevice".to_string();
+                        *method_name_mut = "loadMoreTasks".to_string();
                     });
                 MANUAL_REF_CELL
                     .with(|manual_ref_cell| {
@@ -3604,11 +3549,71 @@ async fn _cdk_user_defined_getDevice(
                         "'exports' is not an object".to_string(),
                     ))?;
                 let function_js_value = exports_js_object
-                    .get("getDevice", &mut boa_context)?;
+                    .get("loadMoreTasks", &mut boa_context)?;
                 let function_js_object = function_js_value
                     .as_object()
                     .ok_or_else(|| RuntimeError::ReferenceError(
-                        format!("{} is not defined", "getDevice"),
+                        format!("{} is not defined", "loadMoreTasks"),
+                    ))?;
+                let boa_return_value = function_js_object
+                    .call(
+                        &boa_engine::JsValue::Null,
+                        &[
+                            _cdk_user_defined_offset
+                                .try_into_vm_value(&mut boa_context)?,
+                            _cdk_user_defined_limit.try_into_vm_value(&mut boa_context)?,
+                        ],
+                        &mut boa_context,
+                    )?;
+                let final_return_value = async_await_result_handler(
+                    &mut boa_context,
+                    &boa_return_value,
+                    &uuid,
+                    "loadMoreTasks",
+                    false,
+                )?;
+                Ok(final_return_value.try_from_vm_value(&mut *boa_context)?)
+            })
+    })
+}
+#[ic_cdk_macros::query(name = "getTask")]
+#[candid::candid_method(query, rename = "getTask")]
+async fn _cdk_user_defined_getTask(
+    _cdk_user_defined_id: String,
+) -> (_AzleResult<Task, String>) {
+    unwrap_or_trap(|| {
+        BOA_CONTEXT_REF_CELL
+            .with(|boa_context_ref_cell| {
+                let mut boa_context = boa_context_ref_cell.borrow_mut();
+                let uuid = uuid::Uuid::new_v4().to_string();
+                UUID_REF_CELL
+                    .with(|uuid_ref_cell| {
+                        let mut uuid_mut = uuid_ref_cell.borrow_mut();
+                        *uuid_mut = uuid.clone();
+                    });
+                METHOD_NAME_REF_CELL
+                    .with(|method_name_ref_cell| {
+                        let mut method_name_mut = method_name_ref_cell.borrow_mut();
+                        *method_name_mut = "getTask".to_string();
+                    });
+                MANUAL_REF_CELL
+                    .with(|manual_ref_cell| {
+                        let mut manual_mut = manual_ref_cell.borrow_mut();
+                        *manual_mut = false;
+                    });
+                let exports_js_value = boa_context
+                    .eval(boa_engine::Source::from_bytes("exports"))?;
+                let exports_js_object = exports_js_value
+                    .as_object()
+                    .ok_or_else(|| RuntimeError::TypeError(
+                        "'exports' is not an object".to_string(),
+                    ))?;
+                let function_js_value = exports_js_object
+                    .get("getTask", &mut boa_context)?;
+                let function_js_object = function_js_value
+                    .as_object()
+                    .ok_or_else(|| RuntimeError::ReferenceError(
+                        format!("{} is not defined", "getTask"),
                     ))?;
                 let boa_return_value = function_js_object
                     .call(
@@ -3620,18 +3625,18 @@ async fn _cdk_user_defined_getDevice(
                     &mut boa_context,
                     &boa_return_value,
                     &uuid,
-                    "getDevice",
+                    "getTask",
                     false,
                 )?;
                 Ok(final_return_value.try_from_vm_value(&mut *boa_context)?)
             })
     })
 }
-#[ic_cdk_macros::query(name = "getDevicesByType")]
-#[candid::candid_method(query, rename = "getDevicesByType")]
-async fn _cdk_user_defined_getDevicesByType(
-    _cdk_user_defined_deviceType: String,
-) -> (_AzleResult<Vec<SmartHomeDevice>, String>) {
+#[ic_cdk_macros::query(name = "getTaskByTags")]
+#[candid::candid_method(query, rename = "getTaskByTags")]
+async fn _cdk_user_defined_getTaskByTags(
+    _cdk_user_defined_tag: String,
+) -> (_AzleResult<Vec<Task>, String>) {
     unwrap_or_trap(|| {
         BOA_CONTEXT_REF_CELL
             .with(|boa_context_ref_cell| {
@@ -3645,7 +3650,7 @@ async fn _cdk_user_defined_getDevicesByType(
                 METHOD_NAME_REF_CELL
                     .with(|method_name_ref_cell| {
                         let mut method_name_mut = method_name_ref_cell.borrow_mut();
-                        *method_name_mut = "getDevicesByType".to_string();
+                        *method_name_mut = "getTaskByTags".to_string();
                     });
                 MANUAL_REF_CELL
                     .with(|manual_ref_cell| {
@@ -3660,17 +3665,73 @@ async fn _cdk_user_defined_getDevicesByType(
                         "'exports' is not an object".to_string(),
                     ))?;
                 let function_js_value = exports_js_object
-                    .get("getDevicesByType", &mut boa_context)?;
+                    .get("getTaskByTags", &mut boa_context)?;
                 let function_js_object = function_js_value
                     .as_object()
                     .ok_or_else(|| RuntimeError::ReferenceError(
-                        format!("{} is not defined", "getDevicesByType"),
+                        format!("{} is not defined", "getTaskByTags"),
+                    ))?;
+                let boa_return_value = function_js_object
+                    .call(
+                        &boa_engine::JsValue::Null,
+                        &[_cdk_user_defined_tag.try_into_vm_value(&mut boa_context)?],
+                        &mut boa_context,
+                    )?;
+                let final_return_value = async_await_result_handler(
+                    &mut boa_context,
+                    &boa_return_value,
+                    &uuid,
+                    "getTaskByTags",
+                    false,
+                )?;
+                Ok(final_return_value.try_from_vm_value(&mut *boa_context)?)
+            })
+    })
+}
+#[ic_cdk_macros::query(name = "searchTasks")]
+#[candid::candid_method(query, rename = "searchTasks")]
+async fn _cdk_user_defined_searchTasks(
+    _cdk_user_defined_searchInput: String,
+) -> (_AzleResult<Vec<Task>, String>) {
+    unwrap_or_trap(|| {
+        BOA_CONTEXT_REF_CELL
+            .with(|boa_context_ref_cell| {
+                let mut boa_context = boa_context_ref_cell.borrow_mut();
+                let uuid = uuid::Uuid::new_v4().to_string();
+                UUID_REF_CELL
+                    .with(|uuid_ref_cell| {
+                        let mut uuid_mut = uuid_ref_cell.borrow_mut();
+                        *uuid_mut = uuid.clone();
+                    });
+                METHOD_NAME_REF_CELL
+                    .with(|method_name_ref_cell| {
+                        let mut method_name_mut = method_name_ref_cell.borrow_mut();
+                        *method_name_mut = "searchTasks".to_string();
+                    });
+                MANUAL_REF_CELL
+                    .with(|manual_ref_cell| {
+                        let mut manual_mut = manual_ref_cell.borrow_mut();
+                        *manual_mut = false;
+                    });
+                let exports_js_value = boa_context
+                    .eval(boa_engine::Source::from_bytes("exports"))?;
+                let exports_js_object = exports_js_value
+                    .as_object()
+                    .ok_or_else(|| RuntimeError::TypeError(
+                        "'exports' is not an object".to_string(),
+                    ))?;
+                let function_js_value = exports_js_object
+                    .get("searchTasks", &mut boa_context)?;
+                let function_js_object = function_js_value
+                    .as_object()
+                    .ok_or_else(|| RuntimeError::ReferenceError(
+                        format!("{} is not defined", "searchTasks"),
                     ))?;
                 let boa_return_value = function_js_object
                     .call(
                         &boa_engine::JsValue::Null,
                         &[
-                            _cdk_user_defined_deviceType
+                            _cdk_user_defined_searchInput
                                 .try_into_vm_value(&mut boa_context)?,
                         ],
                         &mut boa_context,
@@ -3679,19 +3740,18 @@ async fn _cdk_user_defined_getDevicesByType(
                     &mut boa_context,
                     &boa_return_value,
                     &uuid,
-                    "getDevicesByType",
+                    "searchTasks",
                     false,
                 )?;
                 Ok(final_return_value.try_from_vm_value(&mut *boa_context)?)
             })
     })
 }
-#[ic_cdk_macros::query(name = "getActiveDevices")]
-#[candid::candid_method(query, rename = "getActiveDevices")]
-async fn _cdk_user_defined_getActiveDevices() -> (_AzleResult<
-    Vec<SmartHomeDevice>,
-    String,
->) {
+#[ic_cdk_macros::query(name = "getTasksByStatus")]
+#[candid::candid_method(query, rename = "getTasksByStatus")]
+async fn _cdk_user_defined_getTasksByStatus(
+    _cdk_user_defined_status: String,
+) -> (_AzleResult<Vec<Task>, String>) {
     unwrap_or_trap(|| {
         BOA_CONTEXT_REF_CELL
             .with(|boa_context_ref_cell| {
@@ -3705,7 +3765,7 @@ async fn _cdk_user_defined_getActiveDevices() -> (_AzleResult<
                 METHOD_NAME_REF_CELL
                     .with(|method_name_ref_cell| {
                         let mut method_name_mut = method_name_ref_cell.borrow_mut();
-                        *method_name_mut = "getActiveDevices".to_string();
+                        *method_name_mut = "getTasksByStatus".to_string();
                     });
                 MANUAL_REF_CELL
                     .with(|manual_ref_cell| {
@@ -3720,86 +3780,34 @@ async fn _cdk_user_defined_getActiveDevices() -> (_AzleResult<
                         "'exports' is not an object".to_string(),
                     ))?;
                 let function_js_value = exports_js_object
-                    .get("getActiveDevices", &mut boa_context)?;
+                    .get("getTasksByStatus", &mut boa_context)?;
                 let function_js_object = function_js_value
                     .as_object()
                     .ok_or_else(|| RuntimeError::ReferenceError(
-                        format!("{} is not defined", "getActiveDevices"),
-                    ))?;
-                let boa_return_value = function_js_object
-                    .call(&boa_engine::JsValue::Null, &[], &mut boa_context)?;
-                let final_return_value = async_await_result_handler(
-                    &mut boa_context,
-                    &boa_return_value,
-                    &uuid,
-                    "getActiveDevices",
-                    false,
-                )?;
-                Ok(final_return_value.try_from_vm_value(&mut *boa_context)?)
-            })
-    })
-}
-#[ic_cdk_macros::update(name = "turnOnDevice")]
-#[candid::candid_method(update, rename = "turnOnDevice")]
-async fn _cdk_user_defined_turnOnDevice(
-    _cdk_user_defined_id: String,
-) -> (_AzleResult<SmartHomeDevice, String>) {
-    unwrap_or_trap(|| {
-        BOA_CONTEXT_REF_CELL
-            .with(|boa_context_ref_cell| {
-                let mut boa_context = boa_context_ref_cell.borrow_mut();
-                let uuid = uuid::Uuid::new_v4().to_string();
-                UUID_REF_CELL
-                    .with(|uuid_ref_cell| {
-                        let mut uuid_mut = uuid_ref_cell.borrow_mut();
-                        *uuid_mut = uuid.clone();
-                    });
-                METHOD_NAME_REF_CELL
-                    .with(|method_name_ref_cell| {
-                        let mut method_name_mut = method_name_ref_cell.borrow_mut();
-                        *method_name_mut = "turnOnDevice".to_string();
-                    });
-                MANUAL_REF_CELL
-                    .with(|manual_ref_cell| {
-                        let mut manual_mut = manual_ref_cell.borrow_mut();
-                        *manual_mut = false;
-                    });
-                let exports_js_value = boa_context
-                    .eval(boa_engine::Source::from_bytes("exports"))?;
-                let exports_js_object = exports_js_value
-                    .as_object()
-                    .ok_or_else(|| RuntimeError::TypeError(
-                        "'exports' is not an object".to_string(),
-                    ))?;
-                let function_js_value = exports_js_object
-                    .get("turnOnDevice", &mut boa_context)?;
-                let function_js_object = function_js_value
-                    .as_object()
-                    .ok_or_else(|| RuntimeError::ReferenceError(
-                        format!("{} is not defined", "turnOnDevice"),
+                        format!("{} is not defined", "getTasksByStatus"),
                     ))?;
                 let boa_return_value = function_js_object
                     .call(
                         &boa_engine::JsValue::Null,
-                        &[_cdk_user_defined_id.try_into_vm_value(&mut boa_context)?],
+                        &[_cdk_user_defined_status.try_into_vm_value(&mut boa_context)?],
                         &mut boa_context,
                     )?;
                 let final_return_value = async_await_result_handler(
                     &mut boa_context,
                     &boa_return_value,
                     &uuid,
-                    "turnOnDevice",
+                    "getTasksByStatus",
                     false,
                 )?;
                 Ok(final_return_value.try_from_vm_value(&mut *boa_context)?)
             })
     })
 }
-#[ic_cdk_macros::update(name = "turnOffDevice")]
-#[candid::candid_method(update, rename = "turnOffDevice")]
-async fn _cdk_user_defined_turnOffDevice(
-    _cdk_user_defined_id: String,
-) -> (_AzleResult<SmartHomeDevice, String>) {
+#[ic_cdk_macros::query(name = "getTasksByCreator")]
+#[candid::candid_method(query, rename = "getTasksByCreator")]
+async fn _cdk_user_defined_getTasksByCreator(
+    _cdk_user_defined_creator: candid::Principal,
+) -> (_AzleResult<Vec<Task>, String>) {
     unwrap_or_trap(|| {
         BOA_CONTEXT_REF_CELL
             .with(|boa_context_ref_cell| {
@@ -3813,7 +3821,7 @@ async fn _cdk_user_defined_turnOffDevice(
                 METHOD_NAME_REF_CELL
                     .with(|method_name_ref_cell| {
                         let mut method_name_mut = method_name_ref_cell.borrow_mut();
-                        *method_name_mut = "turnOffDevice".to_string();
+                        *method_name_mut = "getTasksByCreator".to_string();
                     });
                 MANUAL_REF_CELL
                     .with(|manual_ref_cell| {
@@ -3828,131 +3836,18 @@ async fn _cdk_user_defined_turnOffDevice(
                         "'exports' is not an object".to_string(),
                     ))?;
                 let function_js_value = exports_js_object
-                    .get("turnOffDevice", &mut boa_context)?;
+                    .get("getTasksByCreator", &mut boa_context)?;
                 let function_js_object = function_js_value
                     .as_object()
                     .ok_or_else(|| RuntimeError::ReferenceError(
-                        format!("{} is not defined", "turnOffDevice"),
-                    ))?;
-                let boa_return_value = function_js_object
-                    .call(
-                        &boa_engine::JsValue::Null,
-                        &[_cdk_user_defined_id.try_into_vm_value(&mut boa_context)?],
-                        &mut boa_context,
-                    )?;
-                let final_return_value = async_await_result_handler(
-                    &mut boa_context,
-                    &boa_return_value,
-                    &uuid,
-                    "turnOffDevice",
-                    false,
-                )?;
-                Ok(final_return_value.try_from_vm_value(&mut *boa_context)?)
-            })
-    })
-}
-#[ic_cdk_macros::update(name = "addDevice")]
-#[candid::candid_method(update, rename = "addDevice")]
-async fn _cdk_user_defined_addDevice(
-    _cdk_user_defined_device: SmartHomeDevice,
-) -> (_AzleResult<SmartHomeDevice, String>) {
-    unwrap_or_trap(|| {
-        BOA_CONTEXT_REF_CELL
-            .with(|boa_context_ref_cell| {
-                let mut boa_context = boa_context_ref_cell.borrow_mut();
-                let uuid = uuid::Uuid::new_v4().to_string();
-                UUID_REF_CELL
-                    .with(|uuid_ref_cell| {
-                        let mut uuid_mut = uuid_ref_cell.borrow_mut();
-                        *uuid_mut = uuid.clone();
-                    });
-                METHOD_NAME_REF_CELL
-                    .with(|method_name_ref_cell| {
-                        let mut method_name_mut = method_name_ref_cell.borrow_mut();
-                        *method_name_mut = "addDevice".to_string();
-                    });
-                MANUAL_REF_CELL
-                    .with(|manual_ref_cell| {
-                        let mut manual_mut = manual_ref_cell.borrow_mut();
-                        *manual_mut = false;
-                    });
-                let exports_js_value = boa_context
-                    .eval(boa_engine::Source::from_bytes("exports"))?;
-                let exports_js_object = exports_js_value
-                    .as_object()
-                    .ok_or_else(|| RuntimeError::TypeError(
-                        "'exports' is not an object".to_string(),
-                    ))?;
-                let function_js_value = exports_js_object
-                    .get("addDevice", &mut boa_context)?;
-                let function_js_object = function_js_value
-                    .as_object()
-                    .ok_or_else(|| RuntimeError::ReferenceError(
-                        format!("{} is not defined", "addDevice"),
-                    ))?;
-                let boa_return_value = function_js_object
-                    .call(
-                        &boa_engine::JsValue::Null,
-                        &[_cdk_user_defined_device.try_into_vm_value(&mut boa_context)?],
-                        &mut boa_context,
-                    )?;
-                let final_return_value = async_await_result_handler(
-                    &mut boa_context,
-                    &boa_return_value,
-                    &uuid,
-                    "addDevice",
-                    false,
-                )?;
-                Ok(final_return_value.try_from_vm_value(&mut *boa_context)?)
-            })
-    })
-}
-#[ic_cdk_macros::update(name = "updateDevice")]
-#[candid::candid_method(update, rename = "updateDevice")]
-async fn _cdk_user_defined_updateDevice(
-    _cdk_user_defined_id: String,
-    _cdk_user_defined_device: SmartHomeDevice,
-) -> (_AzleResult<SmartHomeDevice, String>) {
-    unwrap_or_trap(|| {
-        BOA_CONTEXT_REF_CELL
-            .with(|boa_context_ref_cell| {
-                let mut boa_context = boa_context_ref_cell.borrow_mut();
-                let uuid = uuid::Uuid::new_v4().to_string();
-                UUID_REF_CELL
-                    .with(|uuid_ref_cell| {
-                        let mut uuid_mut = uuid_ref_cell.borrow_mut();
-                        *uuid_mut = uuid.clone();
-                    });
-                METHOD_NAME_REF_CELL
-                    .with(|method_name_ref_cell| {
-                        let mut method_name_mut = method_name_ref_cell.borrow_mut();
-                        *method_name_mut = "updateDevice".to_string();
-                    });
-                MANUAL_REF_CELL
-                    .with(|manual_ref_cell| {
-                        let mut manual_mut = manual_ref_cell.borrow_mut();
-                        *manual_mut = false;
-                    });
-                let exports_js_value = boa_context
-                    .eval(boa_engine::Source::from_bytes("exports"))?;
-                let exports_js_object = exports_js_value
-                    .as_object()
-                    .ok_or_else(|| RuntimeError::TypeError(
-                        "'exports' is not an object".to_string(),
-                    ))?;
-                let function_js_value = exports_js_object
-                    .get("updateDevice", &mut boa_context)?;
-                let function_js_object = function_js_value
-                    .as_object()
-                    .ok_or_else(|| RuntimeError::ReferenceError(
-                        format!("{} is not defined", "updateDevice"),
+                        format!("{} is not defined", "getTasksByCreator"),
                     ))?;
                 let boa_return_value = function_js_object
                     .call(
                         &boa_engine::JsValue::Null,
                         &[
-                            _cdk_user_defined_id.try_into_vm_value(&mut boa_context)?,
-                            _cdk_user_defined_device.try_into_vm_value(&mut boa_context)?,
+                            _cdk_user_defined_creator
+                                .try_into_vm_value(&mut boa_context)?,
                         ],
                         &mut boa_context,
                     )?;
@@ -3960,18 +3855,16 @@ async fn _cdk_user_defined_updateDevice(
                     &mut boa_context,
                     &boa_return_value,
                     &uuid,
-                    "updateDevice",
+                    "getTasksByCreator",
                     false,
                 )?;
                 Ok(final_return_value.try_from_vm_value(&mut *boa_context)?)
             })
     })
 }
-#[ic_cdk_macros::update(name = "toggleDevice")]
-#[candid::candid_method(update, rename = "toggleDevice")]
-async fn _cdk_user_defined_toggleDevice(
-    _cdk_user_defined_id: String,
-) -> (_AzleResult<SmartHomeDevice, String>) {
+#[ic_cdk_macros::query(name = "getOverdueTasks")]
+#[candid::candid_method(query, rename = "getOverdueTasks")]
+async fn _cdk_user_defined_getOverdueTasks() -> (_AzleResult<Vec<Task>, String>) {
     unwrap_or_trap(|| {
         BOA_CONTEXT_REF_CELL
             .with(|boa_context_ref_cell| {
@@ -3985,7 +3878,7 @@ async fn _cdk_user_defined_toggleDevice(
                 METHOD_NAME_REF_CELL
                     .with(|method_name_ref_cell| {
                         let mut method_name_mut = method_name_ref_cell.borrow_mut();
-                        *method_name_mut = "toggleDevice".to_string();
+                        *method_name_mut = "getOverdueTasks".to_string();
                     });
                 MANUAL_REF_CELL
                     .with(|manual_ref_cell| {
@@ -4000,34 +3893,30 @@ async fn _cdk_user_defined_toggleDevice(
                         "'exports' is not an object".to_string(),
                     ))?;
                 let function_js_value = exports_js_object
-                    .get("toggleDevice", &mut boa_context)?;
+                    .get("getOverdueTasks", &mut boa_context)?;
                 let function_js_object = function_js_value
                     .as_object()
                     .ok_or_else(|| RuntimeError::ReferenceError(
-                        format!("{} is not defined", "toggleDevice"),
+                        format!("{} is not defined", "getOverdueTasks"),
                     ))?;
                 let boa_return_value = function_js_object
-                    .call(
-                        &boa_engine::JsValue::Null,
-                        &[_cdk_user_defined_id.try_into_vm_value(&mut boa_context)?],
-                        &mut boa_context,
-                    )?;
+                    .call(&boa_engine::JsValue::Null, &[], &mut boa_context)?;
                 let final_return_value = async_await_result_handler(
                     &mut boa_context,
                     &boa_return_value,
                     &uuid,
-                    "toggleDevice",
+                    "getOverdueTasks",
                     false,
                 )?;
                 Ok(final_return_value.try_from_vm_value(&mut *boa_context)?)
             })
     })
 }
-#[ic_cdk_macros::update(name = "deleteDevice")]
-#[candid::candid_method(update, rename = "deleteDevice")]
-async fn _cdk_user_defined_deleteDevice(
+#[ic_cdk_macros::update(name = "completedTask")]
+#[candid::candid_method(update, rename = "completedTask")]
+async fn _cdk_user_defined_completedTask(
     _cdk_user_defined_id: String,
-) -> (_AzleResult<Option<SmartHomeDevice>, String>) {
+) -> (_AzleResult<Task, String>) {
     unwrap_or_trap(|| {
         BOA_CONTEXT_REF_CELL
             .with(|boa_context_ref_cell| {
@@ -4041,7 +3930,7 @@ async fn _cdk_user_defined_deleteDevice(
                 METHOD_NAME_REF_CELL
                     .with(|method_name_ref_cell| {
                         let mut method_name_mut = method_name_ref_cell.borrow_mut();
-                        *method_name_mut = "deleteDevice".to_string();
+                        *method_name_mut = "completedTask".to_string();
                     });
                 MANUAL_REF_CELL
                     .with(|manual_ref_cell| {
@@ -4056,11 +3945,11 @@ async fn _cdk_user_defined_deleteDevice(
                         "'exports' is not an object".to_string(),
                     ))?;
                 let function_js_value = exports_js_object
-                    .get("deleteDevice", &mut boa_context)?;
+                    .get("completedTask", &mut boa_context)?;
                 let function_js_object = function_js_value
                     .as_object()
                     .ok_or_else(|| RuntimeError::ReferenceError(
-                        format!("{} is not defined", "deleteDevice"),
+                        format!("{} is not defined", "completedTask"),
                     ))?;
                 let boa_return_value = function_js_object
                     .call(
@@ -4072,7 +3961,543 @@ async fn _cdk_user_defined_deleteDevice(
                     &mut boa_context,
                     &boa_return_value,
                     &uuid,
-                    "deleteDevice",
+                    "completedTask",
+                    false,
+                )?;
+                Ok(final_return_value.try_from_vm_value(&mut *boa_context)?)
+            })
+    })
+}
+#[ic_cdk_macros::update(name = "addTask")]
+#[candid::candid_method(update, rename = "addTask")]
+async fn _cdk_user_defined_addTask(
+    _cdk_user_defined_payload: TaskPayload,
+) -> (_AzleResult<Task, String>) {
+    unwrap_or_trap(|| {
+        BOA_CONTEXT_REF_CELL
+            .with(|boa_context_ref_cell| {
+                let mut boa_context = boa_context_ref_cell.borrow_mut();
+                let uuid = uuid::Uuid::new_v4().to_string();
+                UUID_REF_CELL
+                    .with(|uuid_ref_cell| {
+                        let mut uuid_mut = uuid_ref_cell.borrow_mut();
+                        *uuid_mut = uuid.clone();
+                    });
+                METHOD_NAME_REF_CELL
+                    .with(|method_name_ref_cell| {
+                        let mut method_name_mut = method_name_ref_cell.borrow_mut();
+                        *method_name_mut = "addTask".to_string();
+                    });
+                MANUAL_REF_CELL
+                    .with(|manual_ref_cell| {
+                        let mut manual_mut = manual_ref_cell.borrow_mut();
+                        *manual_mut = false;
+                    });
+                let exports_js_value = boa_context
+                    .eval(boa_engine::Source::from_bytes("exports"))?;
+                let exports_js_object = exports_js_value
+                    .as_object()
+                    .ok_or_else(|| RuntimeError::TypeError(
+                        "'exports' is not an object".to_string(),
+                    ))?;
+                let function_js_value = exports_js_object
+                    .get("addTask", &mut boa_context)?;
+                let function_js_object = function_js_value
+                    .as_object()
+                    .ok_or_else(|| RuntimeError::ReferenceError(
+                        format!("{} is not defined", "addTask"),
+                    ))?;
+                let boa_return_value = function_js_object
+                    .call(
+                        &boa_engine::JsValue::Null,
+                        &[
+                            _cdk_user_defined_payload
+                                .try_into_vm_value(&mut boa_context)?,
+                        ],
+                        &mut boa_context,
+                    )?;
+                let final_return_value = async_await_result_handler(
+                    &mut boa_context,
+                    &boa_return_value,
+                    &uuid,
+                    "addTask",
+                    false,
+                )?;
+                Ok(final_return_value.try_from_vm_value(&mut *boa_context)?)
+            })
+    })
+}
+#[ic_cdk_macros::update(name = "addTags")]
+#[candid::candid_method(update, rename = "addTags")]
+async fn _cdk_user_defined_addTags(
+    _cdk_user_defined_id: String,
+    _cdk_user_defined_tags: Vec<String>,
+) -> (_AzleResult<Task, String>) {
+    unwrap_or_trap(|| {
+        BOA_CONTEXT_REF_CELL
+            .with(|boa_context_ref_cell| {
+                let mut boa_context = boa_context_ref_cell.borrow_mut();
+                let uuid = uuid::Uuid::new_v4().to_string();
+                UUID_REF_CELL
+                    .with(|uuid_ref_cell| {
+                        let mut uuid_mut = uuid_ref_cell.borrow_mut();
+                        *uuid_mut = uuid.clone();
+                    });
+                METHOD_NAME_REF_CELL
+                    .with(|method_name_ref_cell| {
+                        let mut method_name_mut = method_name_ref_cell.borrow_mut();
+                        *method_name_mut = "addTags".to_string();
+                    });
+                MANUAL_REF_CELL
+                    .with(|manual_ref_cell| {
+                        let mut manual_mut = manual_ref_cell.borrow_mut();
+                        *manual_mut = false;
+                    });
+                let exports_js_value = boa_context
+                    .eval(boa_engine::Source::from_bytes("exports"))?;
+                let exports_js_object = exports_js_value
+                    .as_object()
+                    .ok_or_else(|| RuntimeError::TypeError(
+                        "'exports' is not an object".to_string(),
+                    ))?;
+                let function_js_value = exports_js_object
+                    .get("addTags", &mut boa_context)?;
+                let function_js_object = function_js_value
+                    .as_object()
+                    .ok_or_else(|| RuntimeError::ReferenceError(
+                        format!("{} is not defined", "addTags"),
+                    ))?;
+                let boa_return_value = function_js_object
+                    .call(
+                        &boa_engine::JsValue::Null,
+                        &[
+                            _cdk_user_defined_id.try_into_vm_value(&mut boa_context)?,
+                            _cdk_user_defined_tags.try_into_vm_value(&mut boa_context)?,
+                        ],
+                        &mut boa_context,
+                    )?;
+                let final_return_value = async_await_result_handler(
+                    &mut boa_context,
+                    &boa_return_value,
+                    &uuid,
+                    "addTags",
+                    false,
+                )?;
+                Ok(final_return_value.try_from_vm_value(&mut *boa_context)?)
+            })
+    })
+}
+#[ic_cdk_macros::update(name = "updateTask")]
+#[candid::candid_method(update, rename = "updateTask")]
+async fn _cdk_user_defined_updateTask(
+    _cdk_user_defined_id: String,
+    _cdk_user_defined_payload: TaskPayload,
+) -> (_AzleResult<Task, String>) {
+    unwrap_or_trap(|| {
+        BOA_CONTEXT_REF_CELL
+            .with(|boa_context_ref_cell| {
+                let mut boa_context = boa_context_ref_cell.borrow_mut();
+                let uuid = uuid::Uuid::new_v4().to_string();
+                UUID_REF_CELL
+                    .with(|uuid_ref_cell| {
+                        let mut uuid_mut = uuid_ref_cell.borrow_mut();
+                        *uuid_mut = uuid.clone();
+                    });
+                METHOD_NAME_REF_CELL
+                    .with(|method_name_ref_cell| {
+                        let mut method_name_mut = method_name_ref_cell.borrow_mut();
+                        *method_name_mut = "updateTask".to_string();
+                    });
+                MANUAL_REF_CELL
+                    .with(|manual_ref_cell| {
+                        let mut manual_mut = manual_ref_cell.borrow_mut();
+                        *manual_mut = false;
+                    });
+                let exports_js_value = boa_context
+                    .eval(boa_engine::Source::from_bytes("exports"))?;
+                let exports_js_object = exports_js_value
+                    .as_object()
+                    .ok_or_else(|| RuntimeError::TypeError(
+                        "'exports' is not an object".to_string(),
+                    ))?;
+                let function_js_value = exports_js_object
+                    .get("updateTask", &mut boa_context)?;
+                let function_js_object = function_js_value
+                    .as_object()
+                    .ok_or_else(|| RuntimeError::ReferenceError(
+                        format!("{} is not defined", "updateTask"),
+                    ))?;
+                let boa_return_value = function_js_object
+                    .call(
+                        &boa_engine::JsValue::Null,
+                        &[
+                            _cdk_user_defined_id.try_into_vm_value(&mut boa_context)?,
+                            _cdk_user_defined_payload
+                                .try_into_vm_value(&mut boa_context)?,
+                        ],
+                        &mut boa_context,
+                    )?;
+                let final_return_value = async_await_result_handler(
+                    &mut boa_context,
+                    &boa_return_value,
+                    &uuid,
+                    "updateTask",
+                    false,
+                )?;
+                Ok(final_return_value.try_from_vm_value(&mut *boa_context)?)
+            })
+    })
+}
+#[ic_cdk_macros::update(name = "deleteTask")]
+#[candid::candid_method(update, rename = "deleteTask")]
+async fn _cdk_user_defined_deleteTask(
+    _cdk_user_defined_id: String,
+) -> (_AzleResult<Task, String>) {
+    unwrap_or_trap(|| {
+        BOA_CONTEXT_REF_CELL
+            .with(|boa_context_ref_cell| {
+                let mut boa_context = boa_context_ref_cell.borrow_mut();
+                let uuid = uuid::Uuid::new_v4().to_string();
+                UUID_REF_CELL
+                    .with(|uuid_ref_cell| {
+                        let mut uuid_mut = uuid_ref_cell.borrow_mut();
+                        *uuid_mut = uuid.clone();
+                    });
+                METHOD_NAME_REF_CELL
+                    .with(|method_name_ref_cell| {
+                        let mut method_name_mut = method_name_ref_cell.borrow_mut();
+                        *method_name_mut = "deleteTask".to_string();
+                    });
+                MANUAL_REF_CELL
+                    .with(|manual_ref_cell| {
+                        let mut manual_mut = manual_ref_cell.borrow_mut();
+                        *manual_mut = false;
+                    });
+                let exports_js_value = boa_context
+                    .eval(boa_engine::Source::from_bytes("exports"))?;
+                let exports_js_object = exports_js_value
+                    .as_object()
+                    .ok_or_else(|| RuntimeError::TypeError(
+                        "'exports' is not an object".to_string(),
+                    ))?;
+                let function_js_value = exports_js_object
+                    .get("deleteTask", &mut boa_context)?;
+                let function_js_object = function_js_value
+                    .as_object()
+                    .ok_or_else(|| RuntimeError::ReferenceError(
+                        format!("{} is not defined", "deleteTask"),
+                    ))?;
+                let boa_return_value = function_js_object
+                    .call(
+                        &boa_engine::JsValue::Null,
+                        &[_cdk_user_defined_id.try_into_vm_value(&mut boa_context)?],
+                        &mut boa_context,
+                    )?;
+                let final_return_value = async_await_result_handler(
+                    &mut boa_context,
+                    &boa_return_value,
+                    &uuid,
+                    "deleteTask",
+                    false,
+                )?;
+                Ok(final_return_value.try_from_vm_value(&mut *boa_context)?)
+            })
+    })
+}
+#[ic_cdk_macros::update(name = "assignTask")]
+#[candid::candid_method(update, rename = "assignTask")]
+async fn _cdk_user_defined_assignTask(
+    _cdk_user_defined_id: String,
+    _cdk_user_defined_assignedTo: String,
+) -> (_AzleResult<Task, String>) {
+    unwrap_or_trap(|| {
+        BOA_CONTEXT_REF_CELL
+            .with(|boa_context_ref_cell| {
+                let mut boa_context = boa_context_ref_cell.borrow_mut();
+                let uuid = uuid::Uuid::new_v4().to_string();
+                UUID_REF_CELL
+                    .with(|uuid_ref_cell| {
+                        let mut uuid_mut = uuid_ref_cell.borrow_mut();
+                        *uuid_mut = uuid.clone();
+                    });
+                METHOD_NAME_REF_CELL
+                    .with(|method_name_ref_cell| {
+                        let mut method_name_mut = method_name_ref_cell.borrow_mut();
+                        *method_name_mut = "assignTask".to_string();
+                    });
+                MANUAL_REF_CELL
+                    .with(|manual_ref_cell| {
+                        let mut manual_mut = manual_ref_cell.borrow_mut();
+                        *manual_mut = false;
+                    });
+                let exports_js_value = boa_context
+                    .eval(boa_engine::Source::from_bytes("exports"))?;
+                let exports_js_object = exports_js_value
+                    .as_object()
+                    .ok_or_else(|| RuntimeError::TypeError(
+                        "'exports' is not an object".to_string(),
+                    ))?;
+                let function_js_value = exports_js_object
+                    .get("assignTask", &mut boa_context)?;
+                let function_js_object = function_js_value
+                    .as_object()
+                    .ok_or_else(|| RuntimeError::ReferenceError(
+                        format!("{} is not defined", "assignTask"),
+                    ))?;
+                let boa_return_value = function_js_object
+                    .call(
+                        &boa_engine::JsValue::Null,
+                        &[
+                            _cdk_user_defined_id.try_into_vm_value(&mut boa_context)?,
+                            _cdk_user_defined_assignedTo
+                                .try_into_vm_value(&mut boa_context)?,
+                        ],
+                        &mut boa_context,
+                    )?;
+                let final_return_value = async_await_result_handler(
+                    &mut boa_context,
+                    &boa_return_value,
+                    &uuid,
+                    "assignTask",
+                    false,
+                )?;
+                Ok(final_return_value.try_from_vm_value(&mut *boa_context)?)
+            })
+    })
+}
+#[ic_cdk_macros::update(name = "changeTaskStatus")]
+#[candid::candid_method(update, rename = "changeTaskStatus")]
+async fn _cdk_user_defined_changeTaskStatus(
+    _cdk_user_defined_id: String,
+    _cdk_user_defined_newStatus: String,
+) -> (_AzleResult<Task, String>) {
+    unwrap_or_trap(|| {
+        BOA_CONTEXT_REF_CELL
+            .with(|boa_context_ref_cell| {
+                let mut boa_context = boa_context_ref_cell.borrow_mut();
+                let uuid = uuid::Uuid::new_v4().to_string();
+                UUID_REF_CELL
+                    .with(|uuid_ref_cell| {
+                        let mut uuid_mut = uuid_ref_cell.borrow_mut();
+                        *uuid_mut = uuid.clone();
+                    });
+                METHOD_NAME_REF_CELL
+                    .with(|method_name_ref_cell| {
+                        let mut method_name_mut = method_name_ref_cell.borrow_mut();
+                        *method_name_mut = "changeTaskStatus".to_string();
+                    });
+                MANUAL_REF_CELL
+                    .with(|manual_ref_cell| {
+                        let mut manual_mut = manual_ref_cell.borrow_mut();
+                        *manual_mut = false;
+                    });
+                let exports_js_value = boa_context
+                    .eval(boa_engine::Source::from_bytes("exports"))?;
+                let exports_js_object = exports_js_value
+                    .as_object()
+                    .ok_or_else(|| RuntimeError::TypeError(
+                        "'exports' is not an object".to_string(),
+                    ))?;
+                let function_js_value = exports_js_object
+                    .get("changeTaskStatus", &mut boa_context)?;
+                let function_js_object = function_js_value
+                    .as_object()
+                    .ok_or_else(|| RuntimeError::ReferenceError(
+                        format!("{} is not defined", "changeTaskStatus"),
+                    ))?;
+                let boa_return_value = function_js_object
+                    .call(
+                        &boa_engine::JsValue::Null,
+                        &[
+                            _cdk_user_defined_id.try_into_vm_value(&mut boa_context)?,
+                            _cdk_user_defined_newStatus
+                                .try_into_vm_value(&mut boa_context)?,
+                        ],
+                        &mut boa_context,
+                    )?;
+                let final_return_value = async_await_result_handler(
+                    &mut boa_context,
+                    &boa_return_value,
+                    &uuid,
+                    "changeTaskStatus",
+                    false,
+                )?;
+                Ok(final_return_value.try_from_vm_value(&mut *boa_context)?)
+            })
+    })
+}
+#[ic_cdk_macros::update(name = "setTaskPriority")]
+#[candid::candid_method(update, rename = "setTaskPriority")]
+async fn _cdk_user_defined_setTaskPriority(
+    _cdk_user_defined_id: String,
+    _cdk_user_defined_priority: String,
+) -> (_AzleResult<Task, String>) {
+    unwrap_or_trap(|| {
+        BOA_CONTEXT_REF_CELL
+            .with(|boa_context_ref_cell| {
+                let mut boa_context = boa_context_ref_cell.borrow_mut();
+                let uuid = uuid::Uuid::new_v4().to_string();
+                UUID_REF_CELL
+                    .with(|uuid_ref_cell| {
+                        let mut uuid_mut = uuid_ref_cell.borrow_mut();
+                        *uuid_mut = uuid.clone();
+                    });
+                METHOD_NAME_REF_CELL
+                    .with(|method_name_ref_cell| {
+                        let mut method_name_mut = method_name_ref_cell.borrow_mut();
+                        *method_name_mut = "setTaskPriority".to_string();
+                    });
+                MANUAL_REF_CELL
+                    .with(|manual_ref_cell| {
+                        let mut manual_mut = manual_ref_cell.borrow_mut();
+                        *manual_mut = false;
+                    });
+                let exports_js_value = boa_context
+                    .eval(boa_engine::Source::from_bytes("exports"))?;
+                let exports_js_object = exports_js_value
+                    .as_object()
+                    .ok_or_else(|| RuntimeError::TypeError(
+                        "'exports' is not an object".to_string(),
+                    ))?;
+                let function_js_value = exports_js_object
+                    .get("setTaskPriority", &mut boa_context)?;
+                let function_js_object = function_js_value
+                    .as_object()
+                    .ok_or_else(|| RuntimeError::ReferenceError(
+                        format!("{} is not defined", "setTaskPriority"),
+                    ))?;
+                let boa_return_value = function_js_object
+                    .call(
+                        &boa_engine::JsValue::Null,
+                        &[
+                            _cdk_user_defined_id.try_into_vm_value(&mut boa_context)?,
+                            _cdk_user_defined_priority
+                                .try_into_vm_value(&mut boa_context)?,
+                        ],
+                        &mut boa_context,
+                    )?;
+                let final_return_value = async_await_result_handler(
+                    &mut boa_context,
+                    &boa_return_value,
+                    &uuid,
+                    "setTaskPriority",
+                    false,
+                )?;
+                Ok(final_return_value.try_from_vm_value(&mut *boa_context)?)
+            })
+    })
+}
+#[ic_cdk_macros::update(name = "sendDueDateReminder")]
+#[candid::candid_method(update, rename = "sendDueDateReminder")]
+async fn _cdk_user_defined_sendDueDateReminder(
+    _cdk_user_defined_id: String,
+) -> (_AzleResult<String, String>) {
+    unwrap_or_trap(|| {
+        BOA_CONTEXT_REF_CELL
+            .with(|boa_context_ref_cell| {
+                let mut boa_context = boa_context_ref_cell.borrow_mut();
+                let uuid = uuid::Uuid::new_v4().to_string();
+                UUID_REF_CELL
+                    .with(|uuid_ref_cell| {
+                        let mut uuid_mut = uuid_ref_cell.borrow_mut();
+                        *uuid_mut = uuid.clone();
+                    });
+                METHOD_NAME_REF_CELL
+                    .with(|method_name_ref_cell| {
+                        let mut method_name_mut = method_name_ref_cell.borrow_mut();
+                        *method_name_mut = "sendDueDateReminder".to_string();
+                    });
+                MANUAL_REF_CELL
+                    .with(|manual_ref_cell| {
+                        let mut manual_mut = manual_ref_cell.borrow_mut();
+                        *manual_mut = false;
+                    });
+                let exports_js_value = boa_context
+                    .eval(boa_engine::Source::from_bytes("exports"))?;
+                let exports_js_object = exports_js_value
+                    .as_object()
+                    .ok_or_else(|| RuntimeError::TypeError(
+                        "'exports' is not an object".to_string(),
+                    ))?;
+                let function_js_value = exports_js_object
+                    .get("sendDueDateReminder", &mut boa_context)?;
+                let function_js_object = function_js_value
+                    .as_object()
+                    .ok_or_else(|| RuntimeError::ReferenceError(
+                        format!("{} is not defined", "sendDueDateReminder"),
+                    ))?;
+                let boa_return_value = function_js_object
+                    .call(
+                        &boa_engine::JsValue::Null,
+                        &[_cdk_user_defined_id.try_into_vm_value(&mut boa_context)?],
+                        &mut boa_context,
+                    )?;
+                let final_return_value = async_await_result_handler(
+                    &mut boa_context,
+                    &boa_return_value,
+                    &uuid,
+                    "sendDueDateReminder",
+                    false,
+                )?;
+                Ok(final_return_value.try_from_vm_value(&mut *boa_context)?)
+            })
+    })
+}
+#[ic_cdk_macros::update(name = "addTaskComment")]
+#[candid::candid_method(update, rename = "addTaskComment")]
+async fn _cdk_user_defined_addTaskComment(
+    _cdk_user_defined_id: String,
+    _cdk_user_defined_comment: String,
+) -> (_AzleResult<Task, String>) {
+    unwrap_or_trap(|| {
+        BOA_CONTEXT_REF_CELL
+            .with(|boa_context_ref_cell| {
+                let mut boa_context = boa_context_ref_cell.borrow_mut();
+                let uuid = uuid::Uuid::new_v4().to_string();
+                UUID_REF_CELL
+                    .with(|uuid_ref_cell| {
+                        let mut uuid_mut = uuid_ref_cell.borrow_mut();
+                        *uuid_mut = uuid.clone();
+                    });
+                METHOD_NAME_REF_CELL
+                    .with(|method_name_ref_cell| {
+                        let mut method_name_mut = method_name_ref_cell.borrow_mut();
+                        *method_name_mut = "addTaskComment".to_string();
+                    });
+                MANUAL_REF_CELL
+                    .with(|manual_ref_cell| {
+                        let mut manual_mut = manual_ref_cell.borrow_mut();
+                        *manual_mut = false;
+                    });
+                let exports_js_value = boa_context
+                    .eval(boa_engine::Source::from_bytes("exports"))?;
+                let exports_js_object = exports_js_value
+                    .as_object()
+                    .ok_or_else(|| RuntimeError::TypeError(
+                        "'exports' is not an object".to_string(),
+                    ))?;
+                let function_js_value = exports_js_object
+                    .get("addTaskComment", &mut boa_context)?;
+                let function_js_object = function_js_value
+                    .as_object()
+                    .ok_or_else(|| RuntimeError::ReferenceError(
+                        format!("{} is not defined", "addTaskComment"),
+                    ))?;
+                let boa_return_value = function_js_object
+                    .call(
+                        &boa_engine::JsValue::Null,
+                        &[
+                            _cdk_user_defined_id.try_into_vm_value(&mut boa_context)?,
+                            _cdk_user_defined_comment
+                                .try_into_vm_value(&mut boa_context)?,
+                        ],
+                        &mut boa_context,
+                    )?;
+                let final_return_value = async_await_result_handler(
+                    &mut boa_context,
+                    &boa_return_value,
+                    &uuid,
+                    "addTaskComment",
                     false,
                 )?;
                 Ok(final_return_value.try_from_vm_value(&mut *boa_context)?)
@@ -4091,13 +4516,37 @@ async fn _cdk_user_defined_deleteDevice(
     Eq,
     PartialEq
 )]
-struct SmartHomeDevice {
-    isOn: Box<bool>,
+struct Task {
+    creator: Box<candid::Principal>,
     id: Box<String>,
-    #[serde(rename = "type")]
-    type_: Box<String>,
-    brand: Box<String>,
-    updatedAt: Box<Option<u64>>,
+    title: Box<String>,
+    description: Box<String>,
+    created_date: Box<u64>,
+    updated_at: Box<Option<u64>>,
+    due_date: Box<String>,
+    assigned_to: Box<String>,
+    tags: Box<Vec<String>>,
+    status: Box<String>,
+    priority: Box<String>,
+    comments: Box<Vec<String>>,
+}
+#[derive(
+    serde::Deserialize,
+    Debug,
+    candid::CandidType,
+    Clone,
+    CdkActTryIntoVmValue,
+    CdkActTryFromVmValue,
+    Ord,
+    PartialOrd,
+    Eq,
+    PartialEq
+)]
+struct TaskPayload {
+    title: Box<String>,
+    description: Box<String>,
+    assigned_to: Box<String>,
+    due_date: Box<String>,
 }
 type NotifyResult = (_AzleResult<(), RejectionCode>);
 type Stable64GrowResult = (_AzleResult<u64, StableMemoryError>);

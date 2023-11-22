@@ -11,7 +11,7 @@
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.isValidUUID = exports.deleteDevice = exports.toggleDevice = exports.updateDevice = exports.addDevice = exports.turnOffDevice = exports.turnOnDevice = exports.getActiveDevices = exports.getDevicesByType = exports.getDevice = exports.getDevices = exports.searchDevices = exports.Principal = void 0;
+exports.addTaskComment = exports.getOverdueTasks = exports.getTasksByCreator = exports.sendDueDateReminder = exports.setTaskPriority = exports.getTasksByStatus = exports.changeTaskStatus = exports.assignTask = exports.deleteTask = exports.updateTask = exports.addTags = exports.addTask = exports.completedTask = exports.searchTasks = exports.getTaskByTags = exports.getTask = exports.loadMoreTasks = exports.getInitialTasks = exports.Principal = void 0;
 function _defineProperty(obj, key, value) {
     if (key in obj) {
         Object.defineProperty(obj, key, {
@@ -1162,150 +1162,235 @@ function v4(options, buf, offset) {
 }
 var v4_default = v4;
 // src/index.ts
-var deviceStorage = new StableBTreeMap(0, 44, 1024);
-function searchDevices(query) {
-    try {
-        const lowerCaseQuery = query.toLowerCase();
-        const filteredDevices = deviceStorage.values().filter((device)=>device.brand.toLowerCase().includes(lowerCaseQuery) || device.type.toLowerCase().includes(lowerCaseQuery)
-        );
-        return Result.Ok(filteredDevices);
-    } catch (error) {
-        return Result.Err(`Error searching for a device: ${error}`);
-    }
+var taskStorage = new StableBTreeMap(0, 44, 512);
+var initialLoadSize = 4;
+function getInitialTasks() {
+    const initialTasks = taskStorage.values().slice(0, initialLoadSize);
+    return Result.Ok(initialTasks);
 }
-exports.searchDevices = searchDevices;
-function getDevices() {
-    try {
-        const devices = deviceStorage.values();
-        return Result.Ok(devices);
-    } catch (error) {
-        return Result.Err(`Error getting devices: ${error}`);
-    }
+exports.getInitialTasks = getInitialTasks;
+function loadMoreTasks(offset, limit) {
+    const moreTasks = taskStorage.values().slice(offset, offset + limit);
+    return Result.Ok(moreTasks);
 }
-exports.getDevices = getDevices;
-function getDevice(id) {
-    return match(deviceStorage.get(id), {
-        Some: (device)=>Result.Ok(device)
-        ,
-        None: ()=>Result.Err(`Device with id=${id} not found`)
-    });
-}
-exports.getDevice = getDevice;
-function getDevicesByType(deviceType) {
-    try {
-        const devicesByType = deviceStorage.values().filter((device)=>device.type.toLowerCase() === deviceType.toLowerCase()
-        );
-        return Result.Ok(devicesByType);
-    } catch (error) {
-        return Result.Err(`Error getting devices by type: ${error}`);
-    }
-}
-exports.getDevicesByType = getDevicesByType;
-function getActiveDevices() {
-    try {
-        const activeDevices = deviceStorage.values().filter((device)=>device.isOn
-        );
-        return Result.Ok(activeDevices);
-    } catch (error) {
-        return Result.Err(`Error getting active devices: ${error}`);
-    }
-}
-exports.getActiveDevices = getActiveDevices;
-function turnOnDevice(id) {
-    return match(deviceStorage.get(id), {
-        Some: (device)=>{
-            if (device.isOn) {
-                return Result.Err(`Device with id=${id} is already on`);
+exports.loadMoreTasks = loadMoreTasks;
+function getTask(id) {
+    return match(taskStorage.get(id), {
+        Some: (task)=>{
+            if (task.creator.toString() !== ic.caller().toString()) {
+                return Result.Err("You are not authorized to access Task");
             }
-            const newDevice = _objectSpread({}, device, {
-                isOn: true
-            });
-            deviceStorage.insert(id, newDevice);
-            return Result.Ok(newDevice);
+            return Result.Ok(task);
         },
-        None: ()=>Result.Err(`Device with id=${id} not found`)
+        None: ()=>Result.Err(`Task with id:${id} not found`)
     });
 }
-exports.turnOnDevice = turnOnDevice;
-function turnOffDevice(id) {
-    return match(deviceStorage.get(id), {
-        Some: (device)=>{
-            if (!device.isOn) {
-                return Result.Err(`Device with id=${id} is already off`);
-            }
-            const newDevice = _objectSpread({}, device, {
-                isOn: false
-            });
-            deviceStorage.insert(id, newDevice);
-            return Result.Ok(newDevice);
-        },
-        None: ()=>Result.Err(`Device with id=${id} not found`)
-    });
+exports.getTask = getTask;
+function getTaskByTags(tag) {
+    const relatedTask = taskStorage.values().filter((task)=>task.tags.includes(tag)
+    );
+    return Result.Ok(relatedTask);
 }
-exports.turnOffDevice = turnOffDevice;
-function addDevice(device) {
+exports.getTaskByTags = getTaskByTags;
+function searchTasks(searchInput) {
+    const lowerCaseSearchInput = searchInput.toLowerCase();
     try {
-        device.id = v4_default();
-        device.isOn = false;
-        if (!device.type || !device.brand) {
-            return Result.Err("Missing required fields in the device object");
-        }
-        device.updatedAt = Opt.Some(ic.time());
-        deviceStorage.insert(device.id, device);
-        return Result.Ok(device);
-    } catch (error) {
-        return Result.Err(`Error adding device: ${error}`);
+        const searchedTask = taskStorage.values().filter((task)=>task.title.toLowerCase().includes(lowerCaseSearchInput) || task.description.toLowerCase().includes(lowerCaseSearchInput)
+        );
+        return Result.Ok(searchedTask);
+    } catch (err) {
+        return Result.Err("Error finding the task");
     }
 }
-exports.addDevice = addDevice;
-function updateDevice(id, device) {
-    return match(deviceStorage.get(id), {
-        Some: (existingDevice)=>{
-            if (!device.type || !device.brand) {
-                return Result.Err("Missing required fields in the device object");
+exports.searchTasks = searchTasks;
+function completedTask(id) {
+    return match(taskStorage.get(id), {
+        Some: (task)=>{
+            if (!task.assigned_to) {
+                return Result.Err("No one was assigned the task");
             }
-            const updatedDevice = _objectSpread({}, existingDevice, device, {
-                updatedAt: Opt.Some(ic.time())
+            const completeTask = _objectSpread({}, task, {
+                status: "Completed"
             });
-            deviceStorage.insert(id, updatedDevice);
-            return Result.Ok(updatedDevice);
+            taskStorage.insert(task.id, completeTask);
+            return Result.Ok(completeTask);
         },
-        None: ()=>Result.Err(`Device with id=${id} does not exist`)
+        None: ()=>Result.Err(`Task with id:${id} not found`)
     });
 }
-exports.updateDevice = updateDevice;
-function toggleDevice(id) {
-    return match(deviceStorage.get(id), {
-        Some: (device)=>{
-            const newDevice = _objectSpread({}, device, {
-                isOn: !device.isOn
-            });
-            deviceStorage.insert(id, newDevice);
-            return Result.Ok(newDevice);
-        },
-        None: ()=>Result.Err(`Device with id=${id} not found`)
-    });
-}
-exports.toggleDevice = toggleDevice;
-function deleteDevice(id) {
+exports.completedTask = completedTask;
+function addTask(payload) {
+    if (!payload.title || !payload.description || !payload.assigned_to || !payload.due_date) {
+        return Result.Err("Missing or invalid input data");
+    }
     try {
-        if (!isValidUUID(id)) {
-            return Result.Err("Invalid device ID");
-        }
-        const deletedDevice = deviceStorage.remove(id);
-        if (!deletedDevice) {
-            return Result.Err(`Device with ID ${id} does not exist`);
-        }
-        return Result.Ok(deletedDevice);
-    } catch (error) {
-        return Result.Err(`Error deleting device: ${error}`);
+        const newTask = _objectSpread({
+            creator: ic.caller(),
+            id: v4_default(),
+            created_date: ic.time(),
+            updated_at: Opt.None,
+            tags: [],
+            status: "In Progress",
+            priority: "",
+            comments: []
+        }, payload);
+        taskStorage.insert(newTask.id, newTask);
+        return Result.Ok(newTask);
+    } catch (err) {
+        return Result.Err("Issue encountered when Creating Task");
     }
 }
-exports.deleteDevice = deleteDevice;
-function isValidUUID(id) {
-    return /^[\da-f]{8}-([\da-f]{4}-){3}[\da-f]{12}$/i.test(id);
+exports.addTask = addTask;
+function addTags(id, tags) {
+    if (!tags || tags.length === 0) {
+        return Result.Err("Invalid tags");
+    }
+    return match(taskStorage.get(id), {
+        Some: (task)=>{
+            if (task.creator.toString() !== ic.caller().toString()) {
+                return Result.Err("You are not authorized to access Task");
+            }
+            const updatedTask = _objectSpread({}, task, {
+                tags: [
+                    ...task.tags,
+                    ...tags
+                ],
+                updated_at: Opt.Some(ic.time())
+            });
+            taskStorage.insert(task.id, updatedTask);
+            return Result.Ok(updatedTask);
+        },
+        None: ()=>Result.Err(`Task with id:${id} not found`)
+    });
 }
-exports.isValidUUID = isValidUUID;
+exports.addTags = addTags;
+function updateTask(id, payload) {
+    return match(taskStorage.get(id), {
+        Some: (task)=>{
+            if (task.creator.toString() !== ic.caller().toString()) {
+                return Result.Err("You are not authorized to access Task");
+            }
+            const updatedTask = _objectSpread({}, task, payload, {
+                updated_at: Opt.Some(ic.time())
+            });
+            taskStorage.insert(task.id, updatedTask);
+            return Result.Ok(updatedTask);
+        },
+        None: ()=>Result.Err(`Task with id:${id} not found`)
+    });
+}
+exports.updateTask = updateTask;
+function deleteTask(id) {
+    return match(taskStorage.get(id), {
+        Some: (task)=>{
+            if (task.creator.toString() !== ic.caller().toString()) {
+                return Result.Err("You are not authorized to access Task");
+            }
+            taskStorage.remove(id);
+            return Result.Ok(task);
+        },
+        None: ()=>Result.Err(`Task with id:${id} not found, could not be deleted`)
+    });
+}
+exports.deleteTask = deleteTask;
+function assignTask(id, assignedTo) {
+    return match(taskStorage.get(id), {
+        Some: (task)=>{
+            if (task.creator.toString() !== ic.caller().toString()) {
+                return Result.Err("You are not authorized to assign a task");
+            }
+            const updatedTask = _objectSpread({}, task, {
+                assigned_to: assignedTo
+            });
+            taskStorage.insert(task.id, updatedTask);
+            return Result.Ok(updatedTask);
+        },
+        None: ()=>Result.Err(`Task with id:${id} not found`)
+    });
+}
+exports.assignTask = assignTask;
+function changeTaskStatus(id, newStatus) {
+    return match(taskStorage.get(id), {
+        Some: (task)=>{
+            if (task.creator.toString() !== ic.caller().toString()) {
+                return Result.Err("You are not authorized to change the task status");
+            }
+            const updatedTask = _objectSpread({}, task, {
+                status: newStatus
+            });
+            taskStorage.insert(task.id, updatedTask);
+            return Result.Ok(updatedTask);
+        },
+        None: ()=>Result.Err(`Task with id:${id} not found`)
+    });
+}
+exports.changeTaskStatus = changeTaskStatus;
+function getTasksByStatus(status) {
+    const tasksByStatus = taskStorage.values().filter((task)=>task.status === status
+    );
+    return Result.Ok(tasksByStatus);
+}
+exports.getTasksByStatus = getTasksByStatus;
+function setTaskPriority(id, priority) {
+    return match(taskStorage.get(id), {
+        Some: (task)=>{
+            if (task.creator.toString() !== ic.caller().toString()) {
+                return Result.Err("You are not authorized to set task priority");
+            }
+            const updatedTask = _objectSpread({}, task, {
+                priority
+            });
+            taskStorage.insert(task.id, updatedTask);
+            return Result.Ok(updatedTask);
+        },
+        None: ()=>Result.Err(`Task with id:${id} not found`)
+    });
+}
+exports.setTaskPriority = setTaskPriority;
+function sendDueDateReminder(id) {
+    const now = new Date().toISOString();
+    return match(taskStorage.get(id), {
+        Some: (task)=>{
+            if (task.due_date < now && task.status !== "Completed") {
+                return Result.Ok("Task is overdue. Please complete it.");
+            } else {
+                return Result.Err("Task is not overdue or already completed.");
+            }
+        },
+        None: ()=>Result.Err(`Task with id:${id} not found`)
+    });
+}
+exports.sendDueDateReminder = sendDueDateReminder;
+function getTasksByCreator(creator) {
+    const creatorTasks = taskStorage.values().filter((task)=>task.creator.toString() === creator.toString()
+    );
+    return Result.Ok(creatorTasks);
+}
+exports.getTasksByCreator = getTasksByCreator;
+function getOverdueTasks() {
+    const now = new Date().toISOString();
+    const overdueTasks = taskStorage.values().filter((task)=>task.due_date < now && task.status !== "Completed"
+    );
+    return Result.Ok(overdueTasks);
+}
+exports.getOverdueTasks = getOverdueTasks;
+function addTaskComment(id, comment) {
+    return match(taskStorage.get(id), {
+        Some: (task)=>{
+            const updatedComments = [
+                ...task.comments,
+                comment
+            ];
+            const updatedTask = _objectSpread({}, task, {
+                comments: updatedComments
+            });
+            taskStorage.insert(task.id, updatedTask);
+            return Result.Ok(updatedTask);
+        },
+        None: ()=>Result.Err(`Task with id:${id} not found`)
+    });
+}
+exports.addTaskComment = addTaskComment;
 globalThis.crypto = {
     getRandomValues: ()=>{
         let array = new Uint8Array(32);

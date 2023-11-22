@@ -1,29 +1,49 @@
 import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 
-export interface SmartHomeDevice {
+export interface Task {
   'id' : string,
-  'isOn' : boolean,
-  'type' : string,
-  'updatedAt' : [] | [bigint],
-  'brand' : string,
+  'status' : string,
+  'title' : string,
+  'updated_at' : [] | [bigint],
+  'creator' : Principal,
+  'tags' : Array<string>,
+  'description' : string,
+  'assigned_to' : string,
+  'due_date' : string,
+  'priority' : string,
+  'comments' : Array<string>,
+  'created_date' : bigint,
 }
-export type _AzleResult = { 'Ok' : SmartHomeDevice } |
+export interface TaskPayload {
+  'title' : string,
+  'description' : string,
+  'assigned_to' : string,
+  'due_date' : string,
+}
+export type _AzleResult = { 'Ok' : Task } |
   { 'Err' : string };
-export type _AzleResult_1 = { 'Ok' : [] | [SmartHomeDevice] } |
+export type _AzleResult_1 = { 'Ok' : Array<Task> } |
   { 'Err' : string };
-export type _AzleResult_2 = { 'Ok' : Array<SmartHomeDevice> } |
+export type _AzleResult_2 = { 'Ok' : string } |
   { 'Err' : string };
 export interface _SERVICE {
-  'addDevice' : ActorMethod<[SmartHomeDevice], _AzleResult>,
-  'deleteDevice' : ActorMethod<[string], _AzleResult_1>,
-  'getActiveDevices' : ActorMethod<[], _AzleResult_2>,
-  'getDevice' : ActorMethod<[string], _AzleResult>,
-  'getDevices' : ActorMethod<[], _AzleResult_2>,
-  'getDevicesByType' : ActorMethod<[string], _AzleResult_2>,
-  'searchDevices' : ActorMethod<[string], _AzleResult_2>,
-  'toggleDevice' : ActorMethod<[string], _AzleResult>,
-  'turnOffDevice' : ActorMethod<[string], _AzleResult>,
-  'turnOnDevice' : ActorMethod<[string], _AzleResult>,
-  'updateDevice' : ActorMethod<[string, SmartHomeDevice], _AzleResult>,
+  'addTags' : ActorMethod<[string, Array<string>], _AzleResult>,
+  'addTask' : ActorMethod<[TaskPayload], _AzleResult>,
+  'addTaskComment' : ActorMethod<[string, string], _AzleResult>,
+  'assignTask' : ActorMethod<[string, string], _AzleResult>,
+  'changeTaskStatus' : ActorMethod<[string, string], _AzleResult>,
+  'completedTask' : ActorMethod<[string], _AzleResult>,
+  'deleteTask' : ActorMethod<[string], _AzleResult>,
+  'getInitialTasks' : ActorMethod<[], _AzleResult_1>,
+  'getOverdueTasks' : ActorMethod<[], _AzleResult_1>,
+  'getTask' : ActorMethod<[string], _AzleResult>,
+  'getTaskByTags' : ActorMethod<[string], _AzleResult_1>,
+  'getTasksByCreator' : ActorMethod<[Principal], _AzleResult_1>,
+  'getTasksByStatus' : ActorMethod<[string], _AzleResult_1>,
+  'loadMoreTasks' : ActorMethod<[number, number], _AzleResult_1>,
+  'searchTasks' : ActorMethod<[string], _AzleResult_1>,
+  'sendDueDateReminder' : ActorMethod<[string], _AzleResult_2>,
+  'setTaskPriority' : ActorMethod<[string, string], _AzleResult>,
+  'updateTask' : ActorMethod<[string, TaskPayload], _AzleResult>,
 }
