@@ -1,0 +1,52 @@
+type Device = record {
+  id : text;
+  status : text;
+  name : text;
+  createdBy : principal;
+  room : text;
+  "type" : text;
+};
+type SmartHomeTask = record {
+  id : text;
+  status : text;
+  title : text;
+  updatedDate : opt nat64;
+  assignedTo : text;
+  tags : vec text;
+  createdDate : nat64;
+  dueDate : text;
+  description : text;
+  priority : text;
+  comments : vec text;
+  devices : vec Device;
+};
+type SmartHomeTaskPayload = record {
+  title : text;
+  assignedTo : text;
+  tags : vec text;
+  dueDate : text;
+  description : text;
+  devices : vec Device;
+};
+type _AzleResult = variant { Ok : SmartHomeTask; Err : text };
+type _AzleResult_1 = variant { Ok : vec SmartHomeTask; Err : text };
+type _AzleResult_2 = variant { Ok : text; Err : text };
+service : () -> {
+  addSmartHomeTask : (SmartHomeTaskPayload) -> (_AzleResult);
+  addSmartHomeTaskComment : (text, text) -> (_AzleResult);
+  addSmartHomeTaskTags : (text, vec text) -> (_AzleResult);
+  assignDeviceToSmartHomeTask : (text, Device) -> (_AzleResult);
+  changeSmartHomeTaskStatus : (text, text) -> (_AzleResult);
+  deleteSmartHomeTask : (text) -> (_AzleResult);
+  getInitialSmartHomeTasks : () -> (_AzleResult_1) query;
+  getOverdueSmartHomeTasks : () -> (_AzleResult_1) query;
+  getSmartHomeTask : (text) -> (_AzleResult) query;
+  getSmartHomeTasksByCreator : (principal) -> (_AzleResult_1) query;
+  getSmartHomeTasksByStatus : (text) -> (_AzleResult_1) query;
+  getSmartHomeTasksByTags : (text) -> (_AzleResult_1) query;
+  loadMoreSmartHomeTasks : (float64, float64) -> (_AzleResult_1) query;
+  searchSmartHomeTasks : (text) -> (_AzleResult_1) query;
+  sendSmartHomeTaskDueDateReminder : (text) -> (_AzleResult_2);
+  setSmartHomeTaskPriority : (text, text) -> (_AzleResult);
+  updateSmartHomeTask : (text, SmartHomeTaskPayload) -> (_AzleResult);
+}
