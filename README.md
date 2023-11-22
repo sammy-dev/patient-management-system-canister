@@ -1,1 +1,1 @@
-# smart-home-controller-canister
+smart-home-controller-canister
