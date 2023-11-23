@@ -1,6 +1,3 @@
-Certainly! Here's the corrected markdown with everything inside:
-
-```markdown
 # Patient Management System Canister
 
 This document provides comprehensive documentation for the Patient Management System Canister, a repository containing the source code for a patient management system canister on the Internet Computer (IC).
