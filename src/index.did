@@ -1,8 +1,16 @@
+type MedicalRecord = record {
+  id : text;
+  patientId : text;
+  date : nat64;
+  treatment : text;
+  diagnosis : text;
+};
 type Patient = record {
   id : text;
   age : float64;
   admittedAt : opt nat64;
   name : text;
+  medicalRecords : vec MedicalRecord;
   gender : text;
   dischargedAt : opt nat64;
   isAdmitted : bool;
@@ -11,12 +19,15 @@ type _AzleResult = variant { Ok : Patient; Err : text };
 type _AzleResult_1 = variant { Ok : opt Patient; Err : text };
 type _AzleResult_2 = variant { Ok : vec Patient; Err : text };
 service : () -> {
+  addMedicalRecord : (text, MedicalRecord) -> (_AzleResult);
   addPatient : (Patient) -> (_AzleResult);
   admitPatient : (text) -> (_AzleResult);
+  deleteMedicalRecord : (text, text) -> (_AzleResult);
   deletePatient : (text) -> (_AzleResult_1);
   dischargePatient : (text) -> (_AzleResult);
   getPatient : (text) -> (_AzleResult) query;
   getPatients : () -> (_AzleResult_2) query;
   searchPatients : (text) -> (_AzleResult_2) query;
+  updateMedicalRecord : (text, text, MedicalRecord) -> (_AzleResult);
   updatePatient : (text, Patient) -> (_AzleResult);
 }
