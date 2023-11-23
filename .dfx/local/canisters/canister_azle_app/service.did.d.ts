@@ -1,49 +1,28 @@
 import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 
-export interface Task {
+export interface Patient {
   'id' : string,
-  'status' : string,
-  'title' : string,
-  'updated_at' : [] | [bigint],
-  'creator' : Principal,
-  'tags' : Array<string>,
-  'description' : string,
-  'assigned_to' : string,
-  'due_date' : string,
-  'priority' : string,
-  'comments' : Array<string>,
-  'created_date' : bigint,
+  'age' : number,
+  'admittedAt' : [] | [bigint],
+  'name' : string,
+  'gender' : string,
+  'dischargedAt' : [] | [bigint],
+  'isAdmitted' : boolean,
 }
-export interface TaskPayload {
-  'title' : string,
-  'description' : string,
-  'assigned_to' : string,
-  'due_date' : string,
-}
-export type _AzleResult = { 'Ok' : Task } |
+export type _AzleResult = { 'Ok' : Patient } |
   { 'Err' : string };
-export type _AzleResult_1 = { 'Ok' : Array<Task> } |
+export type _AzleResult_1 = { 'Ok' : [] | [Patient] } |
   { 'Err' : string };
-export type _AzleResult_2 = { 'Ok' : string } |
+export type _AzleResult_2 = { 'Ok' : Array<Patient> } |
   { 'Err' : string };
 export interface _SERVICE {
-  'addTags' : ActorMethod<[string, Array<string>], _AzleResult>,
-  'addTask' : ActorMethod<[TaskPayload], _AzleResult>,
-  'addTaskComment' : ActorMethod<[string, string], _AzleResult>,
-  'assignTask' : ActorMethod<[string, string], _AzleResult>,
-  'changeTaskStatus' : ActorMethod<[string, string], _AzleResult>,
-  'completedTask' : ActorMethod<[string], _AzleResult>,
-  'deleteTask' : ActorMethod<[string], _AzleResult>,
-  'getInitialTasks' : ActorMethod<[], _AzleResult_1>,
-  'getOverdueTasks' : ActorMethod<[], _AzleResult_1>,
-  'getTask' : ActorMethod<[string], _AzleResult>,
-  'getTaskByTags' : ActorMethod<[string], _AzleResult_1>,
-  'getTasksByCreator' : ActorMethod<[Principal], _AzleResult_1>,
-  'getTasksByStatus' : ActorMethod<[string], _AzleResult_1>,
-  'loadMoreTasks' : ActorMethod<[number, number], _AzleResult_1>,
-  'searchTasks' : ActorMethod<[string], _AzleResult_1>,
-  'sendDueDateReminder' : ActorMethod<[string], _AzleResult_2>,
-  'setTaskPriority' : ActorMethod<[string, string], _AzleResult>,
-  'updateTask' : ActorMethod<[string, TaskPayload], _AzleResult>,
+  'addPatient' : ActorMethod<[Patient], _AzleResult>,
+  'admitPatient' : ActorMethod<[string], _AzleResult>,
+  'deletePatient' : ActorMethod<[string], _AzleResult_1>,
+  'dischargePatient' : ActorMethod<[string], _AzleResult>,
+  'getPatient' : ActorMethod<[string], _AzleResult>,
+  'getPatients' : ActorMethod<[], _AzleResult_2>,
+  'searchPatients' : ActorMethod<[string], _AzleResult_2>,
+  'updatePatient' : ActorMethod<[string, Patient], _AzleResult>,
 }

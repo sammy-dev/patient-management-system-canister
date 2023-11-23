@@ -1,283 +1,166 @@
-import { $query, $update, Record, StableBTreeMap, Vec, match, Result, nat64, ic, Opt, Principal} from 'azle';
+import {
+    $query,
+    $update,
+    Record,
+    StableBTreeMap,
+    Vec,
+    match,
+    Result,
+    nat64,
+    ic,
+    Opt,
+} from 'azle';
 import { v4 as uuidv4 } from 'uuid';
 
-type Task = Record<{
-    creator: Principal;
+type Patient = Record<{
     id: string;
-    title: string;
-    description: string;
-    created_date: nat64;
-    updated_at: Opt<nat64>;
-    due_date: string;
-    assigned_to: string;
-    tags: Vec<string>;
-    status: string;
-    priority: string; // Added for Task Priority
-    comments: Vec<string>; // Added for Task Comments
-}>;
-type TaskPayload = Record<{
-    title: string;
-    description: string;
-    assigned_to: string;
-    due_date: string;
+    name: string;
+    age: number;
+    gender: string;
+    admittedAt: Opt<nat64>;
+    dischargedAt: Opt<nat64>;
+    isAdmitted: boolean;
 }>;
 
-const taskStorage = new StableBTreeMap<string, Task>(0, 44, 512);
+const patientStorage = new StableBTreeMap<string, Patient>(0, 44, 1024);
 
-// Number of Tasks to load initially
-const initialLoadSize = 4;
-
-// Load the Initial batch of Tasks
 $query
-export function getInitialTasks(): Result<Vec<Task>, string> {
-    const initialTasks = taskStorage.values().slice(0, initialLoadSize);
-    return Result.Ok(initialTasks);
-}
-
-// Load more Tasks as the user scrolls down
-$query
-export function loadMoreTasks(offset: number, limit: number): Result<Vec<Task>, string> {
-    const moreTasks = taskStorage.values().slice(offset, offset + limit);
-    return Result.Ok(moreTasks);
-}
-
-// Loading a Specific note
-$query
-export function getTask(id: string): Result<Task, string> {
-    return match(taskStorage.get(id), {
-        Some: (task) => {
-            if (task.creator.toString() !== ic.caller().toString()) {
-                return Result.Err<Task, string>('You are not authorized to access Task');
-            }
-            return Result.Ok<Task, string>(task);
-        },
-        None: () => Result.Err<Task, string>(`Task with id:${id} not found`),
-    });
-}
-
-// Get Task available by Tags
-$query
-export function getTaskByTags(tag: string): Result<Vec<Task>, string> {
-    const relatedTask = taskStorage.values().filter((task) => task.tags.includes(tag));
-    return Result.Ok(relatedTask);
-}
-
-// Search Task
-$query
-export function searchTasks(searchInput: string): Result<Vec<Task>, string> {
-    const lowerCaseSearchInput = searchInput.toLowerCase();
+export function searchPatients(query: string): Result<Vec<Patient>, string> {
     try {
-        const searchedTask = taskStorage.values().filter(
-            (task) =>
-                task.title.toLowerCase().includes(lowerCaseSearchInput) ||
-                task.description.toLowerCase().includes(lowerCaseSearchInput)
+        const lowerCaseQuery = query.toLowerCase();
+        const filteredPatients = patientStorage.values().filter(
+            (patient) =>
+                patient.name.toLowerCase().includes(lowerCaseQuery)
         );
-        return Result.Ok(searchedTask);
-    } catch (err) {
-        return Result.Err('Error finding the task');
+        return Result.Ok(filteredPatients);
+    } catch (error) {
+        return Result.Err(`Error searching for patients: ${error}`);
     }
 }
 
-// Allows Assigned user to approve having completed task
 $update
-export function completedTask(id: string): Result<Task, string> {
-    return match(taskStorage.get(id), {
-        Some: (task) => {
-            if (!task.assigned_to) {
-                return Result.Err<Task, string>('No one was assigned the task');
+export function admitPatient(id: string): Result<Patient, string> {
+    return match(patientStorage.get(id), {
+        Some: (patient) => {
+            if (patient.isAdmitted) {
+                return Result.Err<Patient, string>(`Patient with id=${id} is already admitted`);
             }
-            const completeTask: Task = { ...task, status: 'Completed' };
-            taskStorage.insert(task.id, completeTask);
-            return Result.Ok<Task, string>(completeTask);
+
+            const newPatient: Patient = { ...patient, isAdmitted: true, admittedAt: Opt.Some(ic.time()) };
+            patientStorage.insert(id, newPatient);
+
+            return Result.Ok(newPatient);
         },
-        None: () => Result.Err<Task, string>(`Task with id:${id} not found`),
-    });
+        None: () => Result.Err<Patient, string>(`Patient with id=${id} not found`),
+    }) as Result<Patient, string>;
 }
 
-// Allows a group/Organisation to add a Task
 $update
-export function addTask(payload: TaskPayload): Result<Task, string> {
-    // Validate input data
-    if (!payload.title || !payload.description || !payload.assigned_to || !payload.due_date) {
-        return Result.Err<Task, string>('Missing or invalid input data');
-    }
+export function dischargePatient(id: string): Result<Patient, string> {
+    return match(patientStorage.get(id), {
+        Some: (patient) => {
+            if (!patient.isAdmitted) {
+                return Result.Err<Patient, string>(`Patient with id=${id} is not currently admitted`);
+            }
 
+            const newPatient: Patient = { ...patient, isAdmitted: false, dischargedAt: Opt.Some(ic.time()) };
+            patientStorage.insert(id, newPatient);
+
+            return Result.Ok(newPatient);
+        },
+        None: () => Result.Err<Patient, string>(`Patient with id=${id} not found`),
+    }) as Result<Patient, string>;
+}
+
+$update
+export function addPatient(patient: Patient): Result<Patient, string> {
     try {
-        const newTask: Task = {
-            creator: ic.caller(),
-            id: uuidv4(),
-            created_date: ic.time(),
-            updated_at: Opt.None,
-            tags: [],
-            status: 'In Progress',
-            priority: "",
-            comments: [],
-            ...payload
-        };
-        taskStorage.insert(newTask.id, newTask);
-        return Result.Ok<Task, string>(newTask);
-    } catch (err) {
-        return Result.Err<Task, string>('Issue encountered when Creating Task');
+        // Generate a unique ID for the patient
+        patient.id = uuidv4();
+        // Initialize isAdmitted to false when adding a new patient
+        patient.isAdmitted = false;
+
+        // Validate the patient object
+        if (!patient.name || !patient.age || !patient.gender) {
+            return Result.Err('Missing required fields in the patient object');
+        }
+
+        // Add the patient to patientStorage
+        patientStorage.insert(patient.id, patient);
+
+        return Result.Ok(patient);
+    } catch (error) {
+        return Result.Err(`Error adding patient: ${error}`);
     }
 }
 
-// Adding Tags to the Task created
 $update
-export function addTags(id: string, tags: Vec<string>): Result<Task, string> {
-    // Validate input data
-    if (!tags || tags.length === 0) {
-        return Result.Err<Task, string>('Invalid tags');
+export function updatePatient(id: string, patient: Patient): Result<Patient, string> {
+    return match(patientStorage.get(id), {
+        Some: (existingPatient) => {
+            // Validate the updated patient object
+            if (!patient.name || !patient.age || !patient.gender) {
+                return Result.Err('Missing required fields in the patient object');
+            }
+
+            // Create a new patient object with the updated fields
+            const updatedPatient: Patient = {
+                ...existingPatient,
+                ...patient,
+            };
+
+            // Update the patient in patientStorage
+            patientStorage.insert(id, updatedPatient);
+
+            return Result.Ok(updatedPatient);
+        },
+        None: () => Result.Err<Patient, string>(`Patient with id=${id} does not exist`),
+    }) as Result<Patient, string>;
+}
+
+$query
+export function getPatients(): Result<Vec<Patient>, string> {
+    try {
+        const patients = patientStorage.values();
+        return Result.Ok(patients);
+    } catch (error) {
+        return Result.Err(`Error getting patients: ${error}`);
     }
-
-    return match(taskStorage.get(id), {
-        Some: (task) => {
-            if (task.creator.toString() !== ic.caller().toString()) {
-                return Result.Err<Task, string>('You are not authorized to access Task');
-            }
-            const updatedTask: Task = { ...task, tags: [...task.tags, ...tags], updated_at: Opt.Some(ic.time()) };
-            taskStorage.insert(task.id, updatedTask);
-            return Result.Ok<Task, string>(updatedTask);
-        },
-        None: () => Result.Err<Task, string>(`Task with id:${id} not found`),
-    });
 }
 
-// Giving capability for the creator to be able to Modify task
-$update
-export function updateTask(id: string, payload: TaskPayload): Result<Task, string> {
-    return match(taskStorage.get(id), {
-        Some: (task) => {
-            // Authorization Check
-            if (task.creator.toString() !== ic.caller().toString()) {
-                return Result.Err<Task, string>('You are not authorized to access Task');
-            }
-            const updatedTask: Task = { ...task, ...payload, updated_at: Opt.Some(ic.time()) };
-            taskStorage.insert(task.id, updatedTask);
-            return Result.Ok<Task, string>(updatedTask);
-        },
-        None: () => Result.Err<Task, string>(`Task with id:${id} not found`),
-    });
-}
-
-// Creator can Delete a task
-$update
-export function deleteTask(id: string): Result<Task, string> {
-    return match(taskStorage.get(id), {
-        Some: (task) => {
-            // Authorization Check
-            if (task.creator.toString() !== ic.caller().toString()) {
-                return Result.Err<Task, string>('You are not authorized to access Task');
-            }
-            taskStorage.remove(id);
-            return Result.Ok<Task, string>(task);
-        },
-        None: () => Result.Err<Task, string>(`Task with id:${id} not found, could not be deleted`),
-    });
-}
-
-// Assign a Task to a User
-$update
-export function assignTask(id: string, assignedTo: string): Result<Task, string> {
-    return match(taskStorage.get(id), {
-        Some: (task) => {
-            if (task.creator.toString() !== ic.caller().toString()) {
-                return Result.Err<Task, string>('You are not authorized to assign a task');
-            }
-            const updatedTask: Task = { ...task, assigned_to: assignedTo };
-            taskStorage.insert(task.id, updatedTask);
-            return Result.Ok<Task, string>(updatedTask);
-        },
-        None: () => Result.Err<Task, string>(`Task with id:${id} not found`),
-    });
-}
-
-//Change Task Status
-$update
-export function changeTaskStatus(id: string, newStatus: string): Result<Task, string> {
-    return match(taskStorage.get(id), {
-        Some: (task) => {
-            if (task.creator.toString() !== ic.caller().toString()) {
-                return Result.Err<Task, string>('You are not authorized to change the task status');
-            }
-            const updatedTask: Task = { ...task, status: newStatus };
-            taskStorage.insert(task.id, updatedTask);
-            return Result.Ok<Task, string>(updatedTask);
-        },
-        None: () => Result.Err<Task, string>(`Task with id:${id} not found`),
-    });
-}
-
-// Get Tasks by Status
 $query
-export function getTasksByStatus(status: string): Result<Vec<Task>, string> {
-    const tasksByStatus = taskStorage.values().filter((task) => task.status === status);
-    return Result.Ok(tasksByStatus);
+export function getPatient(id: string): Result<Patient, string> {
+    return match(patientStorage.get(id), {
+        Some: (patient) => Result.Ok<Patient, string>(patient),
+        None: () => Result.Err<Patient, string>(`Patient with id=${id} not found`),
+    }) as Result<Patient, string>;
 }
 
-// Set Task Priority
 $update
-export function setTaskPriority(id: string, priority: string): Result<Task, string> {
-    return match(taskStorage.get(id), {
-        Some: (task) => {
-            if (task.creator.toString() !== ic.caller().toString()) {
-                return Result.Err<Task, string>('You are not authorized to set task priority');
-            }
-            const updatedTask: Task = { ...task, priority };
-            taskStorage.insert(task.id, updatedTask);
-            return Result.Ok<Task, string>(updatedTask);
-        },
-        None: () => Result.Err<Task, string>(`Task with id:${id} not found`),
-    });
+export function deletePatient(id: string): Result<Opt<Patient>, string> {
+    try {
+        // Validate the id parameter
+        if (!isValidUUID(id)) {
+            return Result.Err('Invalid patient ID');
+        }
+
+        // Delete the patient from patientStorage
+        const deletedPatient = patientStorage.remove(id);
+        if (!deletedPatient) {
+            return Result.Err(`Patient with ID ${id} does not exist`);
+        }
+
+        return Result.Ok(deletedPatient);
+    } catch (error) {
+        return Result.Err(`Error deleting patient: ${error}`);
+    }
 }
 
-// Task Due Date Reminder
-$update
-export function sendDueDateReminder(id: string): Result<string, string> {
-    const now = new Date().toISOString();
-    return match(taskStorage.get(id), {
-        Some: (task) => {
-            if (task.due_date < now && task.status !== 'Completed') {
-                return Result.Ok<string, string>('Task is overdue. Please complete it.');
-            } else {
-                return Result.Err<string, string>('Task is not overdue or already completed.');
-            }
-        },
-        None: () => Result.Err<string, string>(`Task with id:${id} not found`),
-    });
+export function isValidUUID(id: string): boolean {
+    return /^[\da-f]{8}-([\da-f]{4}-){3}[\da-f]{12}$/i.test(id);
 }
 
-//Get Tasks by Creator
-$query
-export function getTasksByCreator(creator: Principal): Result<Vec<Task>, string> {
-    const creatorTasks = taskStorage.values().filter((task) => task.creator.toString() === creator.toString());
-    return Result.Ok(creatorTasks);
-}
-
-//Get Overdue Tasks
-$query
-export function getOverdueTasks(): Result<Vec<Task>, string> {
-    const now = new Date().toISOString();
-    const overdueTasks = taskStorage.values().filter(
-        (task) => task.due_date < now && task.status !== 'Completed'
-    );
-    return Result.Ok(overdueTasks);
-}
-
-// Task Comments
-$update
-export function addTaskComment(id: string, comment: string): Result<Task, string> {
-    return match(taskStorage.get(id), {
-        Some: (task) => {
-            const updatedComments = [...task.comments, comment];
-            const updatedTask: Task = { ...task, comments: updatedComments };
-            taskStorage.insert(task.id, updatedTask);
-            return Result.Ok<Task, string>(updatedTask);
-        },
-        None: () => Result.Err<Task, string>(`Task with id:${id} not found`),
-    });
-}
-
-// UUID workaround
+// A workaround to make the uuid package work with Azle
 globalThis.crypto = {
     // @ts-ignore
     getRandomValues: () => {
