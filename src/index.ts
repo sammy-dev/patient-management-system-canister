@@ -33,6 +33,12 @@ type MedicalRecord = Record<{
 
 const patientStorage = new StableBTreeMap<string, Patient>(0, 44, 1024);
 
+/**
+ * Searches for patients based on a query string.
+ *
+ * @param {string} query - The query string to search for in patient names.
+ * @returns {Result<Vec<Patient>, string>} - A Result containing the filtered list of patients or an error message.
+ */
 $query
 export function searchPatients(query: string): Result<Vec<Patient>, string> {
     try {
@@ -47,6 +53,12 @@ export function searchPatients(query: string): Result<Vec<Patient>, string> {
     }
 }
 
+/**
+ * Admits a patient identified by the given ID.
+ *
+ * @param {string} id - The ID of the patient to be admitted.
+ * @returns {Result<Patient, string>} - A Result containing the admitted patient or an error message.
+ */
 $update
 export function admitPatient(id: string): Result<Patient, string> {
     return match(patientStorage.get(id), {
@@ -64,6 +76,12 @@ export function admitPatient(id: string): Result<Patient, string> {
     }) as Result<Patient, string>;
 }
 
+/**
+ * Discharges a currently admitted patient identified by the given ID.
+ *
+ * @param {string} id - The ID of the patient to be discharged.
+ * @returns {Result<Patient, string>} - A Result containing the discharged patient or an error message.
+ */
 $update
 export function dischargePatient(id: string): Result<Patient, string> {
     return match(patientStorage.get(id), {
@@ -81,6 +99,12 @@ export function dischargePatient(id: string): Result<Patient, string> {
     }) as Result<Patient, string>;
 }
 
+/**
+ * Adds a new patient to the system.
+ *
+ * @param {Patient} patient - The patient object to be added.
+ * @returns {Result<Patient, string>} - A Result containing the added patient or an error message.
+ */
 $update
 export function addPatient(patient: Patient): Result<Patient, string> {
     try {
@@ -103,6 +127,13 @@ export function addPatient(patient: Patient): Result<Patient, string> {
     }
 }
 
+/**
+ * Updates the information of an existing patient identified by the given ID.
+ *
+ * @param {string} id - The ID of the patient to be updated.
+ * @param {Patient} patient - The updated patient object.
+ * @returns {Result<Patient, string>} - A Result containing the updated patient or an error message.
+ */
 $update
 export function updatePatient(id: string, patient: Patient): Result<Patient, string> {
     return match(patientStorage.get(id), {
@@ -127,6 +158,13 @@ export function updatePatient(id: string, patient: Patient): Result<Patient, str
     }) as Result<Patient, string>;
 }
 
+/**
+ * Adds a medical record to the patient's records.
+ *
+ * @param {string} patientId - The ID of the patient.
+ * @param {MedicalRecord} medicalRecord - The medical record to be added.
+ * @returns {Result<Patient, string>} - A Result containing the patient with the updated records or an error message.
+ */
 $update
 export function addMedicalRecord(patientId: string, medicalRecord: MedicalRecord): Result<Patient, string> {
     return match(patientStorage.get(patientId), {
@@ -146,6 +184,14 @@ export function addMedicalRecord(patientId: string, medicalRecord: MedicalRecord
     }) as Result<Patient, string>;
 }
 
+/**
+ * Updates a medical record for a patient identified by the given IDs.
+ *
+ * @param {string} patientId - The ID of the patient.
+ * @param {string} medicalRecordId - The ID of the medical record to be updated.
+ * @param {MedicalRecord} updatedMedicalRecord - The updated medical record.
+ * @returns {Result<Patient, string>} - A Result containing the patient with the updated records or an error message.
+ */
 $update
 export function updateMedicalRecord(patientId: string, medicalRecordId: string, updatedMedicalRecord: MedicalRecord): Result<Patient, string> {
     return match(patientStorage.get(patientId), {
@@ -178,6 +224,13 @@ export function updateMedicalRecord(patientId: string, medicalRecordId: string, 
     }) as Result<Patient, string>;
 }
 
+/**
+ * Deletes a medical record for a patient identified by the given IDs.
+ *
+ * @param {string} patientId - The ID of the patient.
+ * @param {string} medicalRecordId - The ID of the medical record to be deleted.
+ * @returns {Result<Patient, string>} - A Result containing the patient with the updated records or an error message.
+ */
 $update
 export function deleteMedicalRecord(patientId: string, medicalRecordId: string): Result<Patient, string> {
     return match(patientStorage.get(patientId), {
@@ -206,7 +259,11 @@ export function deleteMedicalRecord(patientId: string, medicalRecordId: string):
     }) as Result<Patient, string>;
 }
 
-
+/**
+ * Retrieves a list of all patients in the system.
+ *
+ * @returns {Result<Vec<Patient>, string>} - A Result containing the list of patients or an error message.
+ */
 $query
 export function getPatients(): Result<Vec<Patient>, string> {
     try {
@@ -217,6 +274,12 @@ export function getPatients(): Result<Vec<Patient>, string> {
     }
 }
 
+/**
+ * Retrieves a patient by the given ID.
+ *
+ * @param {string} id - The ID of the patient to be retrieved.
+ * @returns {Result<Patient, string>} - A Result containing the retrieved patient or an error message.
+ */
 $query
 export function getPatient(id: string): Result<Patient, string> {
     return match(patientStorage.get(id), {
@@ -225,6 +288,12 @@ export function getPatient(id: string): Result<Patient, string> {
     }) as Result<Patient, string>;
 }
 
+/**
+ * Deletes a patient identified by the given ID.
+ *
+ * @param {string} id - The ID of the patient to be deleted.
+ * @returns {Result<Opt<Patient>, string>} - A Result containing the deleted patient or an error message.
+ */
 $update
 export function deletePatient(id: string): Result<Opt<Patient>, string> {
     try {
@@ -245,13 +314,29 @@ export function deletePatient(id: string): Result<Opt<Patient>, string> {
     }
 }
 
+/**
+ * Validates if the given string is a valid UUID.
+ *
+ * @param {string} id - The string to be validated as a UUID.
+ * @returns {boolean} - True if the string is a valid UUID, false otherwise.
+ */
 export function isValidUUID(id: string): boolean {
     return /^[\da-f]{8}-([\da-f]{4}-){3}[\da-f]{12}$/i.test(id);
 }
 
+// Correct TypeScript declaration for the crypto object
+declare global {
+    namespace NodeJS {
+        interface Global {
+            crypto: {
+                getRandomValues: (array: Uint8Array) => Uint8Array;
+            };
+        }
+    }
+}
+
 // A workaround to make the uuid package work with Azle
 globalThis.crypto = {
-    // @ts-ignore
     getRandomValues: () => {
         let array = new Uint8Array(32);
 
