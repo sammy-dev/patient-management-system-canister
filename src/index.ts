@@ -20,6 +20,15 @@ type Patient = Record<{
     admittedAt: Opt<nat64>;
     dischargedAt: Opt<nat64>;
     isAdmitted: boolean;
+    medicalRecords: Vec<MedicalRecord>;
+}>;
+
+type MedicalRecord = Record<{
+    id: string;
+    patientId: string;
+    diagnosis: string;
+    treatment: string;
+    date: nat64;
 }>;
 
 const patientStorage = new StableBTreeMap<string, Patient>(0, 44, 1024);
@@ -117,6 +126,86 @@ export function updatePatient(id: string, patient: Patient): Result<Patient, str
         None: () => Result.Err<Patient, string>(`Patient with id=${id} does not exist`),
     }) as Result<Patient, string>;
 }
+
+$update
+export function addMedicalRecord(patientId: string, medicalRecord: MedicalRecord): Result<Patient, string> {
+    return match(patientStorage.get(patientId), {
+        Some: (patient) => {
+            // Add the medical record to the patient's records
+            const updatedPatient: Patient = {
+                ...patient,
+                medicalRecords: [...patient.medicalRecords, medicalRecord],
+            };
+
+            // Update the patient in patientStorage
+            patientStorage.insert(patientId, updatedPatient);
+
+            return Result.Ok(updatedPatient);
+        },
+        None: () => Result.Err<Patient, string>(`Patient with id=${patientId} does not exist`),
+    }) as Result<Patient, string>;
+}
+
+$update
+export function updateMedicalRecord(patientId: string, medicalRecordId: string, updatedMedicalRecord: MedicalRecord): Result<Patient, string> {
+    return match(patientStorage.get(patientId), {
+        Some: (patient) => {
+            // Find the index of the medical record to update
+            const recordIndex = patient.medicalRecords.findIndex(record => record.id === medicalRecordId);
+
+            // Check if the medical record exists
+            if (recordIndex !== -1) {
+                // Create a new array with the updated medical record
+                const updatedMedicalRecords = [
+                    ...patient.medicalRecords.slice(0, recordIndex),
+                    updatedMedicalRecord,
+                    ...patient.medicalRecords.slice(recordIndex + 1),
+                ];
+
+                // Update the patient in patientStorage
+                const updatedPatient: Patient = {
+                    ...patient,
+                    medicalRecords: updatedMedicalRecords,
+                };
+                patientStorage.insert(patientId, updatedPatient);
+
+                return Result.Ok(updatedPatient);
+            } else {
+                return Result.Err<Patient, string>(`Medical record with id=${medicalRecordId} not found for patient with id=${patientId}`);
+            }
+        },
+        None: () => Result.Err<Patient, string>(`Patient with id=${patientId} does not exist`),
+    }) as Result<Patient, string>;
+}
+
+$update
+export function deleteMedicalRecord(patientId: string, medicalRecordId: string): Result<Patient, string> {
+    return match(patientStorage.get(patientId), {
+        Some: (patient) => {
+            // Find the index of the medical record to delete
+            const recordIndex = patient.medicalRecords.findIndex(record => record.id === medicalRecordId);
+
+            // Check if the medical record exists
+            if (recordIndex !== -1) {
+                // Remove the medical record from the array
+                const updatedMedicalRecords = [...patient.medicalRecords.slice(0, recordIndex), ...patient.medicalRecords.slice(recordIndex + 1)];
+
+                // Update the patient in patientStorage
+                const updatedPatient: Patient = {
+                    ...patient,
+                    medicalRecords: updatedMedicalRecords,
+                };
+                patientStorage.insert(patientId, updatedPatient);
+
+                return Result.Ok(updatedPatient);
+            } else {
+                return Result.Err<Patient, string>(`Medical record with id=${medicalRecordId} not found for patient with id=${patientId}`);
+            }
+        },
+        None: () => Result.Err<Patient, string>(`Patient with id=${patientId} does not exist`),
+    }) as Result<Patient, string>;
+}
+
 
 $query
 export function getPatients(): Result<Vec<Patient>, string> {
