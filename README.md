@@ -30,6 +30,12 @@ The Patient Management System Canister offers a range of functionalities related
 
 - **Update Patient (`updatePatient`):** Updates information about an existing patient. It validates the updated patient object, creates a new patient object with the updated fields, and updates the patient in the storage.
 
+- **Add Medical Record (`addMedicalRecord`):** Adds a medical record to a patient's records. It associates the medical record with the patient and updates the patient in the storage.
+
+- **Update Medical Record (`updateMedicalRecord`):** Updates information about an existing medical record for a patient. It validates the updated medical record object, finds the corresponding record, creates a new array with the updated record, and updates the patient in the storage.
+
+- **Delete Medical Record (`deleteMedicalRecord`):** Deletes a medical record from a patient's records. It finds the corresponding record, removes it from the array, and updates the patient in the storage.
+
 - **Get Patients (`getPatients`):** Retrieves information about all patients in the system. It returns a list of patient records.
 
 - **Get Patient (`getPatient`):** Retrieves information about a specific patient based on the provided patient ID.
@@ -42,7 +48,7 @@ The Patient Management System Canister offers a range of functionalities related
 
 ### UUID Package Workaround
 
-+-A workaround is implemented to make the UUID package work with Azle by providing a global implementation of the `crypto` object.
+- A workaround is implemented to make the UUID package work with Azle by providing a global implementation of the `crypto` object.
 
 ## Deployment on Local Machine
 
@@ -91,4 +97,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## GitHub Repository
 
 [GitHub Repository](https://github.com/sirmwilu/patient-management-system-canister.git)
-```
