@@ -1,3 +1,6 @@
+Certainly! Here's the corrected markdown with everything inside:
+
+```markdown
 # Patient Management System Canister
 
 This document provides comprehensive documentation for the Patient Management System Canister, a repository containing the source code for a patient management system canister on the Internet Computer (IC).
@@ -42,7 +45,7 @@ The Patient Management System Canister offers a range of functionalities related
 
 ### UUID Package Workaround
 
-A workaround is implemented to make the UUID package work with Azle by providing a global implementation of the `crypto` object.
++-A workaround is implemented to make the UUID package work with Azle by providing a global implementation of the `crypto` object.
 
 ## Deployment on Local Machine
 
@@ -52,29 +55,40 @@ To deploy the Patient Management System Canister locally, follow these steps:
    ```bash
    git clone https://github.com/sirmwilu/patient-management-system-canister.git
    cd patient-management-system-canister
-Build the Canister:
+   ```
 
-bash
-Copy code
-dfx build
-Deploy the Canister:
+2. **Build the Canister:**
+   ```bash
+   dfx build
+   ```
 
-bash
-Copy code
-dfx deploy
-Use the Generated Canister Identifier:
-The deployment process will provide you with a canister identifier. Use this identifier to interact with the deployed canister.
+3. **Deploy the Canister:**
+   ```bash
+   dfx deploy
+   ```
 
-For additional deployment options and configurations, refer to the Internet Computer SDK documentation.
+4. **Use the Generated Canister Identifier:**
+   The deployment process will provide you with a canister identifier. Use this identifier to interact with the deployed canister.
 
-Testing
+For additional deployment options and configurations, refer to the [Internet Computer SDK documentation](https://sdk.dfinity.org/docs/quickstart/local-quickstart.html).
+
+## Testing
+
 To run tests, use the following command:
 
-bash
-Copy code
+```bash
 cargo test
-Contributing
+```
+
+## Contributing
+
 Feel free to contribute to the project by submitting issues or pull requests. Follow the standard GitHub flow for contributing.
 
-License
-This project is licensed under the MIT License - see the LICENSE file for details.
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## GitHub Repository
+
+[GitHub Repository](https://github.com/sirmwilu/patient-management-system-canister.git)
+```
