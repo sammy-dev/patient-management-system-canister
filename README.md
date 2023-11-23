@@ -53,18 +53,21 @@ To deploy the Patient Management System Canister locally, follow these steps:
    git clone https://github.com/sirmwilu/patient-management-system-canister.git
    cd patient-management-system-canister
    ```
-
-2. **Build the Canister:**
+2. **Start the Canister:**
+   ```bash
+   dfx start
+   ```
+3. **Build the Canister:**
    ```bash
    dfx build
    ```
 
-3. **Deploy the Canister:**
+4. **Deploy the Canister:**
    ```bash
    dfx deploy
    ```
 
-4. **Use the Generated Canister Identifier:**
+5. **Use the Generated Canister Identifier:**
    The deployment process will provide you with a canister identifier. Use this identifier to interact with the deployed canister.
 
 For additional deployment options and configurations, refer to the [Internet Computer SDK documentation](https://sdk.dfinity.org/docs/quickstart/local-quickstart.html).
